@@ -530,6 +530,7 @@ MRESULT wmBeginDrag( HWND hwnd, MPARAM mp1, MPARAM mp2 )
         WinSetWindowPos( hwnd, HWND_TOP,
                          trackInfo.rclTrack.xLeft, trackInfo.rclTrack.yBottom, 0, 0,
                          SWP_SHOW | SWP_MOVE | SWP_ZORDER );
+        WinStoreWindowPos( PRF_APP, PRF_KEY_POSITION, hwnd );
     }
 
     return MRFROMLONG( TRUE );
