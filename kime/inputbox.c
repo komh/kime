@@ -1,3 +1,4 @@
+#define INCL_WINTIMER
 #define INCL_DOSMEMMGR
 #define INCL_PM
 #include <os2.h>
@@ -9,21 +10,30 @@
 
 #include "../hanlib/han.h"
 
+#define DEFAULT_QCP_TIME_INTERVAL   "200"
+#define TID_QCP                     1
+
 typedef struct tagINPUTBOXCTLDATA
 {
     HANCHAR hch;
     PRECTL  pCursorPos;
 } INPUTBOXCTLDATA, *PINPUTBOXCTLDATA;
 
+static HWND hwndCurrentInput = NULLHANDLE;
+static ULONG ulQCPTimeInterval = 0;
+
 static MRESULT ib_wmCreate( HWND, MPARAM, MPARAM );
 static MRESULT ib_wmDestroy( HWND, MPARAM, MPARAM );
 static MRESULT ib_wmPaint( HWND, MPARAM, MPARAM );
+static MRESULT ib_wmTimer( HWND, MPARAM, MPARAM );
 
 static MRESULT ib_umSetHanChar( HWND, MPARAM, MPARAM );
 static MRESULT ib_umQueryHanChar( HWND, MPARAM, MPARAM );
 static MRESULT ib_umShowInputBox( HWND, MPARAM, MPARAM );
 
 static MRESULT EXPENTRY ib_wndProc( HWND, ULONG, MPARAM, MPARAM );
+
+static VOID setIBPos( HWND hwnd );
 
 BOOL EXPENTRY RegisterInputBoxControl( HAB hab )
 {
@@ -46,6 +56,7 @@ static MRESULT EXPENTRY ib_wndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2
         case WM_CREATE      : return ib_wmCreate( hwnd, mp1, mp2 );
         case WM_DESTROY     : return ib_wmDestroy( hwnd, mp1, mp2 );
         case WM_PAINT       : return ib_wmPaint( hwnd, mp1, mp2 );
+        case WM_TIMER       : return ib_wmTimer( hwnd, mp1, mp2 );
 
         case IBM_SETHANCHAR     : return ib_umSetHanChar( hwnd, mp1, mp2 );
         case IBM_QUERYHANCHAR   : return ib_umQueryHanChar( hwnd, mp1, mp2 );
@@ -58,6 +69,7 @@ static MRESULT EXPENTRY ib_wndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2
 static MRESULT ib_wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 {
     PINPUTBOXCTLDATA pibcd;
+    CHAR buffer[ 10 ];
 
     WinSetWindowPtr( hwnd, 0, 0 );
 
@@ -75,6 +87,9 @@ static MRESULT ib_wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     WinSetWindowPtr( hwnd, 0, pibcd );
 
     pibcd->hch = 0;
+
+    PrfQueryProfileString( HINI_USERPROFILE, "OS2IM", "IMWindowTimerQCP", DEFAULT_QCP_TIME_INTERVAL, buffer, sizeof( buffer ));
+    ulQCPTimeInterval = atol( buffer );
 
     return MRFROMLONG( FALSE );
 }
@@ -169,6 +184,14 @@ static MRESULT ib_wmPaint( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     return 0;
 }
 
+static MRESULT ib_wmTimer( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+    setIBPos( hwnd );
+
+    return 0;
+}
+
+
 static MRESULT ib_umSetHanChar( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 {
     PINPUTBOXCTLDATA pibcd = WinQueryWindowPtr( hwnd, 0 );
@@ -195,34 +218,19 @@ static MRESULT ib_umQueryHanChar( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 
 static MRESULT ib_umShowInputBox( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 {
-    PINPUTBOXCTLDATA pibcd = WinQueryWindowPtr( hwnd, 0 );
-    HWND    hwndCurrentInput = HWNDFROMMP( mp1 );
+    //PINPUTBOXCTLDATA pibcd = WinQueryWindowPtr( hwnd, 0 );
     BOOL    flShow = LONGFROMMP( mp2 );
-    USHORT  rc;
 
     if( flShow )
     {
-        PID pid;
-
-        WinQueryWindowProcess( hwndCurrentInput, &pid, NULL );
-        DosGiveSharedMem( pibcd->pCursorPos, pid, PAG_READ | PAG_WRITE );
-
-        rc = SHORT1FROMMR( WinSendMsg( hwndCurrentInput, WM_QUERYCONVERTPOS,
-                                       MPFROMP( pibcd->pCursorPos ), 0 ));
-        if( rc == QCP_CONVERT )
-        {
-            POINTL ptl = { pibcd->pCursorPos->xLeft, pibcd->pCursorPos->yBottom };
-
-            if(( ptl.x != -1 ) && ( ptl.y != -1 ))
-            {
-                WinMapWindowPoints( hwndCurrentInput, HWND_DESKTOP, &ptl, 1 );
-
-                ptl.x -= IB_BORDER_SIZE * 2;
-                ptl.y -= IB_BORDER_SIZE * 2;
-            }
-
-            WinSetWindowPos( hwnd, HWND_TOP, ptl.x, ptl.y, 0, 0, SWP_MOVE | SWP_ZORDER );
-        }
+        hwndCurrentInput = HWNDFROMMP( mp1 );
+        setIBPos( hwnd );
+        WinStartTimer( WinQueryAnchorBlock( hwnd ), hwnd, TID_QCP, ulQCPTimeInterval );
+    }
+    else
+    {
+        WinStopTimer( WinQueryAnchorBlock( hwnd ), hwnd, TID_QCP );
+        hwndCurrentInput = NULLHANDLE;
     }
 
     WinShowWindow( hwnd, flShow );
@@ -230,4 +238,29 @@ static MRESULT ib_umShowInputBox( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     return 0;
 }
 
+static VOID setIBPos( HWND hwnd )
+{
+    PINPUTBOXCTLDATA pibcd = WinQueryWindowPtr( hwnd, 0 );
+    USHORT rc;
+    PID pid;
 
+    WinQueryWindowProcess( hwndCurrentInput, &pid, NULL );
+    DosGiveSharedMem( pibcd->pCursorPos, pid, PAG_READ | PAG_WRITE );
+
+    rc = SHORT1FROMMR( WinSendMsg( hwndCurrentInput, WM_QUERYCONVERTPOS,
+                                   MPFROMP( pibcd->pCursorPos ), 0 ));
+    if( rc == QCP_CONVERT )
+    {
+        POINTL ptl = { pibcd->pCursorPos->xLeft, pibcd->pCursorPos->yBottom };
+
+        if(( ptl.x != -1 ) && ( ptl.y != -1 ))
+        {
+            WinMapWindowPoints( hwndCurrentInput, HWND_DESKTOP, &ptl, 1 );
+
+            ptl.x -= IB_BORDER_SIZE * 2;
+            ptl.y -= IB_BORDER_SIZE * 2;
+        }
+
+        WinSetWindowPos( hwnd, HWND_TOP, ptl.x, ptl.y, 0, 0, SWP_MOVE | SWP_ZORDER );
+    }
+}
