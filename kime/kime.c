@@ -248,7 +248,6 @@ MRESULT EXPENTRY windowProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         case WM_BEGINDRAG       : return wmBeginDrag( hwnd, mp1, mp2 );
         case WM_BUTTON2UP       : return wmButton2Up( hwnd, mp1, mp2 );
         case WM_COMMAND         : return wmCommand( hwnd, mp1, mp2 );
-
         case KIMEM_CHANGEHAN     : return kime_umChangeHan( hwnd, mp1, mp2 );
         case KIMEM_SETHAN        : return kime_umSetHan( hwnd, mp1, mp2 );
         case KIMEM_QUERYHAN      : return kime_umQueryHan( hwnd, mp1, mp2 );
@@ -500,9 +499,12 @@ MRESULT wmBeginDrag( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     trackInfo.fs = TF_MOVE | TF_STANDARD | TF_ALLINBOUNDARY;
 
     if ( WinTrackRect( HWND_DESKTOP, NULLHANDLE, &trackInfo ))
+    {
+        WinInvalidateRect( hwnd, NULL, TRUE );
         WinSetWindowPos( hwnd, HWND_TOP,
                          trackInfo.rclTrack.xLeft, trackInfo.rclTrack.yBottom, 0, 0,
-                         SWP_MOVE | SWP_ZORDER );
+                         SWP_SHOW | SWP_MOVE | SWP_ZORDER );
+    }
 
     return MRFROMLONG( TRUE );
 }
@@ -529,10 +531,14 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
             switch( SHORT1FROMMP( mp1 ))
             {
                 case IDB_HANENG :
+                    WinInvalidateRect( hwnd, NULL, TRUE );
+                    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
                     //WinSendMsg( hwnd, KIMEM_CHANGEHAN, 0, 0 );
                     break;
 
                 case IDB_IM :
+                    WinInvalidateRect( hwnd, NULL, TRUE );
+                    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
                     //WinSendMsg( hwnd, KIMEM_CHANGEIM, 0, 0 );
                     break;
 
@@ -578,8 +584,8 @@ MRESULT kime_umChangeHan( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     PKIME kime = WinQueryWindowPtr( hwnd, 0 );
     HWND hwndHanEngBtn = WinWindowFromID( hwnd, IDB_HANENG );
 
-    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
     WinInvalidateRect( hwnd, NULL, TRUE );
+    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
 
     kime->han = !kime->han;
     WinSetWindowText( hwndHanEngBtn, hanStatusStr[ kime->han ]);
@@ -592,8 +598,8 @@ MRESULT kime_umSetHan( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     PKIME kime = WinQueryWindowPtr( hwnd, 0 );
     HWND hwndHanEngBtn = WinWindowFromID( hwnd, IDB_HANENG );
 
-    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
     WinInvalidateRect( hwnd, NULL, TRUE );
+    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
 
     kime->han = LONGFROMMP( mp1 );
     WinSetWindowText( hwndHanEngBtn, hanStatusStr[ kime->han ]);

@@ -27,6 +27,7 @@ static MRESULT hchlb_umSetVertInt( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 static MRESULT hchlb_umQueryHorzInt( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 static MRESULT hchlb_umSetHorzInt( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 static MRESULT hchlb_umRefresh( HWND hwnd, MPARAM mp1, MPARAM mp2 );
+static MRESULT hchlb_umChar( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 
 static void refreshClient( HWND hwnd );
 static void refreshScrollBar( HWND hwnd );
@@ -52,7 +53,7 @@ MRESULT EXPENTRY HCHLBWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         case WM_CREATE   : return hchlb_wmCreate( hwnd, mp1, mp2 );
         case WM_DESTROY  : return hchlb_wmDestroy( hwnd, mp1, mp2 );
         case WM_SIZE     : return hchlb_wmSize( hwnd, mp1, mp2 );
-        case WM_SETFOCUS : return hchlb_wmSetFocus( hwnd, mp1, mp2 );
+        //case WM_SETFOCUS : return hchlb_wmSetFocus( hwnd, mp1, mp2 );
         case WM_PAINT    : return hchlb_wmPaint( hwnd, mp1, mp2 );
         case WM_VSCROLL  : return hchlb_wmVscroll( hwnd, mp1, mp2 );
 
@@ -71,6 +72,7 @@ MRESULT EXPENTRY HCHLBWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         case HCHLM_QUERYHORZINT   : return hchlb_umQueryHorzInt( hwnd, mp1, mp2 );
         case HCHLM_SETHORZINT     : return hchlb_umSetHorzInt( hwnd, mp1, mp2 );
         case HCHLM_REFRESH        : return hchlb_umRefresh( hwnd, mp1, mp2 );
+        case HCHLM_CHAR           : return hchlb_umChar( hwnd, mp1, mp2 );
 
         default         : return WinDefWindowProc( hwnd, msg, mp1, mp2 );
     }
@@ -107,6 +109,7 @@ MRESULT hchlb_wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     cy = pcs->cy - ( HCH_BORDER * 2 );
 
     hchlb->hwndHCHLB = hwnd;
+
     hchlb->hwndClient = WinCreateWindow(
                             hwnd, WC_HCHLB_CLIENT, NULL,
                             WS_VISIBLE,
@@ -493,6 +496,13 @@ MRESULT hchlb_umRefresh( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     refreshScrollBar( hwnd );
 
     return 0;
+}
+
+MRESULT hchlb_umChar( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+    PHCHLB  hchlb = WinQueryWindowPtr( hwnd, 0 );
+
+    return ( MRESULT )WinSendMsg( hchlb->hwndClient, WM_CHAR, mp1, mp2 );
 }
 
 void refreshClient( HWND hwnd )

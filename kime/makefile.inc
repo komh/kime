@@ -1,9 +1,13 @@
 .SUFFIXES : .h .c .cpp .o .obj .exe .rc .res
 
 CC		 = gcc
-CFLAGS_R = -Wall -Zomf -Zcrtdll -s
-LFLAGS_R = -lwrap
+CFLAGS	 = -Wall -Zomf -Zcrtdll -s
+LFLAGS	 = -lwrap
 LFDLL	 = -Zdll -Zso -Zsys -Zomf
+
+ifdef DEBUG
+CFLAGS := $(CFLAGS) -DDEBUG
+endif
 
 IMP 	= emximp
 
@@ -27,22 +31,22 @@ RES_LIST   = $(addsuffix .res, $(basename $(RC_LIST)))
 DEF_NAME   = $(EXE_NAME:.exe=.def)
 
 .c.o :
-	$(CC) $(CFLAGS_D) -I$(INC_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
 .cpp.o :
-	$(CC) $(CFLAGS_D) -I$(INC_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
 .c.obj :
-	$(CC) $(CFLAGS_R) -I$(INC_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
 .cpp.obj :
-	$(CC) $(CFLAGS_R) -I$(INC_DIR) -c $< -o $@
+	$(CC) $(CFLAGS) -I$(INC_DIR) -c $< -o $@
 
 .rc.res :
 	$(RC) -r $<
 
 $(EXE_NAME) : $(OBJ_LIST) $(LIB_LIST) $(DEF_NAME) $(RES_LIST)
-	$(CC) $(CFLAGS_R) $(LFLAGS_R) $^ -o $@
+	$(CC) $(CFLAGS) $(LFLAGS) $^ -o $@
 
 clean :
 	-$(RM) *.o *.obj

@@ -136,7 +136,7 @@ MRESULT optDlg_wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
                                    MPFROM2SHORT( index, FACESIZE ), MPFROMP( fontName ));
 
                 PrfWriteProfileString( HINI_USERPROFILE, "PM_SystemFonts", "PM_AssociateFont", fontName );
-                WinMessageBox( HWND_DESKTOP, HWND_DESKTOP,
+                WinMessageBox( HWND_DESKTOP, hwnd,
                                "System must be rebooted for changes to take effect.",
                                "Information", 100, MB_OK | MB_INFORMATION );
 

@@ -33,6 +33,7 @@ BOOL RegisterHanCharListBoxControl( HAB hab );
 #define HCHLM_QUERYHORZINT      ( WM_USER + 14 )
 #define HCHLM_SETHORZINT        ( WM_USER + 15 )
 #define HCHLM_REFRESH           ( WM_USER + 16 )
+#define HCHLM_CHAR              ( WM_USER + 17 )
 
 // HanCharListBox control window notification codes
 #define HCHLN_ENTER                 0x0001

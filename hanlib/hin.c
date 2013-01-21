@@ -1,3 +1,7 @@
+#define INCL_PM
+#include <os2.h>
+
+#include <stdio.h>
 #include <ctype.h>
 
 #include "hin.h"
@@ -27,6 +31,7 @@ MRESULT APIENTRY HIA_WndProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2);
 static MRESULT hia_wmCreate(HWND hwnd,MPARAM mp1,MPARAM mp2);
 static MRESULT hia_wmDestroy(HWND hwnd,MPARAM mp1,MPARAM mp2);
 static MRESULT hia_wmChar(HWND hwnd,MPARAM mp1,MPARAM mp2);
+static MRESULT hia_wmControl( HWND hwnd,MPARAM mp1,MPARAM mp2 );
 
 static MRESULT hia_usermConnect(HWND hwnd,MPARAM mp1,MPARAM mp2);
 static MRESULT hia_usermRegisterNotify(HWND hwnd,MPARAM mp1,MPARAM mp2);
@@ -48,6 +53,9 @@ static MRESULT hia_usermQueryHanjaKeyCheckProc( HWND hwnd, MPARAM mp1, MPARAM mp
 static MRESULT hia_usermSetHanjaKeyCheckProc( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 static MRESULT hia_usermQuerySpecialCharKeyCheckProc( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 static MRESULT hia_usermSetSpecialCharKeyCheckProc( HWND hwnd, MPARAM mp1, MPARAM mp2 );
+static MRESULT hia_usermChar( HWND hwnd, MPARAM mp1, MPARAM mp2 );
+static MRESULT hia_usermQueryRunningHCHLB( HWND hwnd, MPARAM mp1, MPARAM mp2 );
+static MRESULT hia_usermDestroyHCHLB( HWND hwnd, MPARAM mp1, MPARAM mp2 );
 
 static void HIA_NotifyToList(HIA* hia,USHORT notifCode,MPARAM mp2);
 static void HIA_NotifyToConnected(HIA* hia,USHORT notifCode,MPARAM mp2);
@@ -58,6 +66,10 @@ static ULONG hia_iskeypadkey(UCHAR ucScancode);
 
 static BOOL hia_defaultHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL hia_defaultSpecialCharKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
+
+static VOID hia_initHanjaSel( HIA *hia, HWND hwndParent, HWND hwndOwner, HANCHAR hch );
+static VOID hia_initScsel( HIA *hia, HWND hwndParent, HWND hwndOwner );
+static VOID hia_destroyHCHLB( HIA *hia );
 
 static unsigned char kbdtable[3][96] = {
 { // kbdtype 2
@@ -167,6 +179,119 @@ BOOL hia_defaultSpecialCharKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, U
     return FALSE;
 }
 
+#define CX_HANJASEL 300
+#define CY_HANJASEL 200
+
+VOID hia_initHanjaSel( HIA *hia, HWND hwndParent, HWND hwndOwner, HANCHAR hch )
+{
+    LONG    cxScreen, cyScreen;
+    int     pos, count;
+
+
+    hia->hwndHCHLB = WinCreateWindow( hwndParent,
+                                      WC_HCHLB,
+                                      "Hanja Selection",
+                                      WS_SYNCPAINT,
+                                      0, 0,
+                                      0, 0,
+                                      hwndOwner,
+                                      HWND_TOP,
+                                      IDHCHLB_HANJASEL,
+                                      NULL,
+                                      NULL );
+
+    if( hia->hwndHCHLB )
+    {
+        hia->fRunningHCHLB = TRUE;
+
+        WinSendMsg( hia->hwndHCHLB, HCHLM_SETHORZINT, MPFROMSHORT( 4 ), 0 );
+        WinSendMsg( hia->hwndHCHLB, HCHLM_SETVERTINT, MPFROMSHORT( 4 ), 0 );
+
+        WinSendMsg( hia->hwndHCHLB, HCHLM_INSERT,
+                    MPFROMSHORT( HCHLIT_END ), MPFROMSHORT( hch ));
+
+        if( hch_hg2hjpos( hch, &pos, &count ) == 0 )
+        {
+            int i;
+
+            for( i = 0; i < count; i ++, pos ++ )
+                WinSendMsg( hia->hwndHCHLB, HCHLM_INSERT,
+                            MPFROMSHORT( HCHLIT_END ), MPFROMSHORT( hch_pos2hj( pos )));
+        }
+
+        cxScreen = WinQuerySysValue( HWND_DESKTOP, SV_CXSCREEN );
+        cyScreen = WinQuerySysValue( HWND_DESKTOP, SV_CYSCREEN );
+
+        WinSetWindowPos( hia->hwndHCHLB, HWND_TOP,
+                         ( cxScreen - CX_HANJASEL ) / 2,
+                         ( cyScreen - CY_HANJASEL ) / 2,
+                         CX_HANJASEL, CY_HANJASEL,
+                         SWP_SHOW | SWP_MOVE | SWP_ZORDER | SWP_SIZE  );
+    }
+}
+
+#define CX_SCSEL 300
+#define CY_SCSEL 200
+
+VOID hia_initScsel( HIA *hia, HWND hwndParent, HWND hwndOwner )
+{
+    int i, j;
+    LONG cxScreen, cyScreen;
+
+    hia->hwndHCHLB = WinCreateWindow( hwndParent,
+                                      WC_HCHLB,
+                                      "Special Character Selection",
+                                      WS_SYNCPAINT,
+                                      0, 0,
+                                      0, 0,
+                                      hwndOwner,
+                                      HWND_TOP,
+                                      IDHCHLB_SPECIALCHARSEL,
+                                      NULL,
+                                      NULL );
+
+
+    if( hia->hwndHCHLB )
+    {
+        hia->fRunningHCHLB = TRUE;
+
+        WinSendMsg( hia->hwndHCHLB, HCHLM_SETHORZINT, MPFROMSHORT( 4 ), 0 );
+        WinSendMsg( hia->hwndHCHLB, HCHLM_SETVERTINT, MPFROMSHORT( 4 ), 0 );
+
+        for( i = 0; i < 6; i++ )
+        {
+            for( j = 0x31; j <= 0x7E; j ++ )
+                WinSendMsg( hia->hwndHCHLB, HCHLM_INSERT,
+                            MPFROMSHORT( HCHLIT_END ),
+                            MPFROMSHORT( HCHFROM2CH( 0xD9 + i, j )));
+
+            for( j = 0x91; j <= 0xFE; j ++ )
+                WinSendMsg( hia->hwndHCHLB, HCHLM_INSERT,
+                            MPFROMSHORT( HCHLIT_END ),
+                            MPFROMSHORT( HCHFROM2CH( 0xD9 + i, j )));
+        }
+
+        WinSendMsg( hia->hwndHCHLB, HCHLM_SELECTITEM, MPFROMSHORT( hia->scselIndex ),
+                    MPFROMLONG( TRUE ));
+
+        cxScreen = WinQuerySysValue( HWND_DESKTOP, SV_CXSCREEN );
+        cyScreen = WinQuerySysValue( HWND_DESKTOP, SV_CYSCREEN );
+
+        WinSetWindowPos( hia->hwndHCHLB, HWND_TOP,
+                        ( cxScreen - CX_SCSEL ) / 2,
+                        ( cyScreen - CY_SCSEL ) / 2,
+                        CX_SCSEL, CY_SCSEL,
+                        SWP_SHOW | SWP_MOVE | SWP_ZORDER | SWP_SIZE );
+    }
+}
+
+VOID hia_destroyHCHLB( HIA *hia )
+{
+    hia->fRunningHCHLB = FALSE;
+
+    WinDestroyWindow( hia->hwndHCHLB );
+}
+
 BOOL RegisterHanAutomataClass(HAB hab)
 {
     if( !WinRegisterClass(hab,WCOBJ_HIA,HIA_WndProc,0,HIA_cbWINDOWDATA))
@@ -187,6 +312,7 @@ MRESULT APIENTRY HIA_WndProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
    case WM_CREATE:              return hia_wmCreate(hwnd,mp1,mp2);
    case WM_DESTROY:             return hia_wmDestroy(hwnd,mp1,mp2);
    case WM_CHAR:                return hia_wmChar(hwnd,mp1,mp2);
+   case WM_CONTROL:             return hia_wmControl( hwnd, mp1, mp2 );
 
    case HIAM_CONNECT:           return hia_usermConnect(hwnd,mp1,mp2);
    case HIAM_REGISTERNOTIFY:    return hia_usermRegisterNotify(hwnd,mp1,mp2);
@@ -203,6 +329,9 @@ MRESULT APIENTRY HIA_WndProc(HWND hwnd,ULONG msg,MPARAM mp1,MPARAM mp2)
    case HIAM_SETINSERTMODE:     return hia_usermSetInsertMode(hwnd,mp1,mp2);
    case HIAM_QUERYWORKINGHCH:   return hia_usermQueryWorkingHch(hwnd,mp1,mp2);
    case HIAM_QUERYSTATE:        return hia_usermQueryState(hwnd,mp1,mp2);
+   case HIAM_CHAR:              return hia_usermChar(hwnd,mp1,mp2);
+   case HIAM_QUERYRUNNINGHCHLB: return hia_usermQueryRunningHCHLB( hwnd, mp1, mp2 );
+   case HIAM_DESTROYHCHLB:      return hia_usermDestroyHCHLB( hwnd, mp1, mp2 );
 
    case HIAM_QUERYHANJAKEYCHECKPROC:        return hia_usermQueryHanjaKeyCheckProc( hwnd, mp1, mp2 );
    case HIAM_SETHANJAKEYCHECKPROC:          return hia_usermSetHanjaKeyCheckProc( hwnd, mp1, mp2 );
@@ -262,6 +391,9 @@ int i;
     hia->notifList[0].hwnd = hwndOwner;
     hia->notifList[0].id = Id;
     hia->responseTo = &(hia->notifList[0]);
+    hia->hwndHCHLB = NULLHANDLE;
+    hia->fRunningHCHLB = FALSE;
+    hia->scselIndex = 0;
 
     if (!WinSetWindowPtr(hwnd,WINWORD_INSTANCE,(PVOID)hia))
         return MRFROMLONG(TRUE);
@@ -293,6 +425,9 @@ USHORT ckey;
 
 //  printf("HIA:: WM_CHAR\n");
 
+    if( hia->fRunningHCHLB )
+        return ( MRESULT )TRUE;
+
     if (fsFlags & KC_KEYUP) return 0L;
 
     if( hia->isHanjaKey != NULL )
@@ -302,15 +437,12 @@ USHORT ckey;
             if( hia->inbuf->newpos != HIABUF_NONE )
             {
                 HANCHAR hch = SHORT1FROMMR( WinSendMsg( hwnd, HIAM_QUERYWORKINGHCH, 0, 0 ));
-                HANCHAR hj;
 
-                hj = hjselDlg( HWND_DESKTOP, hia->responseTo->hwnd, NULLHANDLE, hch );
-                if( hj != HCH_SINGLE_SPACE )
-                    hch = hj;
+                hia_initHanjaSel( hia, HWND_DESKTOP, hwnd, hch );
 
-                WinSendMsg( hwnd, HIAM_CANCELBUF, 0, 0 );
-                HIA_NotifyToConnected(hia,HIAN_COMPO_COMPLETE,MPFROMSHORT(hch));
-                HIA_NotifyToConnected(hia,HIAN_INSERTHCH,MPFROMSHORT(hch));
+                //WinSendMsg( hwnd, HIAM_CANCELBUF, 0, 0 );
+                //HIA_NotifyToConnected(hia,HIAN_COMPO_COMPLETE,MPFROMSHORT(hch));
+                //HIA_NotifyToConnected(hia,HIAN_INSERTHCH,MPFROMSHORT(hch));
 
                 //WinSendMsg( hwnd, HIAM_COMPLETEHCH, 0, 0 );
                 //HIA_NotifyToConnected( hia, HIAN_HGHJCONVERT, MPFROMLONG( TRUE ));
@@ -326,16 +458,9 @@ USHORT ckey;
     {
         if( hia->isSpecialCharKey( fsFlags, ucScancode, ucVkey, ucChar ))
         {
-            SCSELINFO scselInfo = { -1, -1, -1 };
-
             WinSendMsg( hwnd, HIAM_COMPLETEHCH, 0, 0 );
 
-            scselDlg( HWND_DESKTOP, hia->responseTo->hwnd, NULLHANDLE, &scselInfo );
-            if( scselInfo.hch != HCH_SINGLE_SPACE )
-            {
-                HIA_NotifyToConnected(hia,HIAN_COMPO_COMPLETE,MPFROMSHORT(scselInfo.hch));
-                HIA_NotifyToConnected(hia,HIAN_INSERTHCH,MPFROMSHORT(scselInfo.hch));
-            }
+            hia_initScsel( hia, HWND_DESKTOP, hwnd );
 
             return MRFROMLONG( TRUE );
         }
@@ -505,6 +630,46 @@ USHORT ckey;
         }
         }
     return MRFROMLONG(FALSE);    // not consumed
+}
+
+MRESULT hia_wmControl(HWND hwnd,MPARAM mp1,MPARAM mp2)
+{
+    HIA     *hia = WinQueryWindowPtr(hwnd,WINWORD_INSTANCE);
+    USHORT  id = SHORT1FROMMP( mp1 );
+    USHORT  notifyCode = SHORT2FROMMP( mp1 );
+
+    switch( id )
+    {
+        case IDHCHLB_HANJASEL :
+        case IDHCHLB_SPECIALCHARSEL :
+        {
+            SHORT index = SHORT1FROMMP( mp2 );
+
+            if( notifyCode == HCHLN_ENTER )
+            {
+                if( index != HCHLIT_NONE )
+                {
+                    HANCHAR hch = SHORT1FROMMR( WinSendMsg( hia->hwndHCHLB, HCHLM_QUERYHCH,
+                                                MPFROMSHORT( index ), 0 ));
+
+                    if( id == IDHCHLB_HANJASEL )
+                        WinSendMsg( hwnd, HIAM_CANCELBUF, 0, 0 );
+                    else
+                        hia->scselIndex = index;
+
+                    HIA_NotifyToConnected(hia,HIAN_COMPO_COMPLETE,MPFROM2SHORT(hch,0));
+                    HIA_NotifyToConnected(hia,HIAN_INSERTHCH,MPFROM2SHORT(hch,0));
+                }
+                else if( id == IDHCHLB_HANJASEL )
+                    WinSendMsg( hwnd, HIAM_COMPLETEHCH, 0, 0 );
+
+                hia_destroyHCHLB( hia );
+            }
+            break;
+        }
+    }
+
+    return 0;
 }
 
 MRESULT hia_usermCompleteHch(HWND hwnd,MPARAM mp1,MPARAM mp2)
@@ -767,6 +932,31 @@ HIA *hia = WinQueryWindowPtr(hwnd,WINWORD_INSTANCE);
     return 0;
 }
 
+MRESULT hia_usermChar( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+HIA *hia = WinQueryWindowPtr(hwnd,WINWORD_INSTANCE);
+
+    return ( MRESULT )WinSendMsg( hia->hwndHCHLB, HCHLM_CHAR, mp1, mp2 );
+}
+
+MRESULT hia_usermQueryRunningHCHLB( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+HIA *hia = WinQueryWindowPtr(hwnd,WINWORD_INSTANCE);
+
+    return ( MRESULT )hia->fRunningHCHLB;
+}
+
+MRESULT hia_usermDestroyHCHLB( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+HIA *hia = WinQueryWindowPtr(hwnd,WINWORD_INSTANCE);
+
+    WinSendMsg( hia->hwndHCHLB, HCHLM_CHAR,
+                MPFROMSH2CH( KC_VIRTUALKEY, 0, 0 ),
+                MPFROM2SHORT( 0, VK_ESC ));
+
+    return 0;
+}
+
 void HIA_NotifyToList(HIA* hia,USHORT notifCode,MPARAM mp2)
 {
 int i;
@@ -779,7 +969,7 @@ int i;
 
 void HIA_NotifyToConnected(HIA *hia,USHORT notifCode,MPARAM mp2)
 {
-#ifndef __KIME__
+#if 0
     WinSendMsg(hia->responseTo->hwnd,WM_CONTROL,
         MPFROM2SHORT(hia->responseTo->id,notifCode),mp2);
 #else

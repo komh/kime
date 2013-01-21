@@ -1,12 +1,21 @@
-.PHONY: kime clean
+.PHONY: release debug clean
 
 CP = copy
 
-kime :
+release :
 	$(MAKE) -C hchlb release KIME=1
 	$(MAKE) -C hanlib release KIME=1
 	$(MAKE) -C hst release KIME=1
 	$(MAKE) -C kime
+	$(CP) kime\kime.exe
+	$(CP) kime\kimehook.dll
+	$(CP) kime\except.dat
+
+debug :
+	$(MAKE) -C hchlb release KIME=1
+	$(MAKE) -C hanlib release KIME=1
+	$(MAKE) -C hst release KIME=1
+	$(MAKE) -C kime DEBUG=1
 	$(CP) kime\kime.exe
 	$(CP) kime\kimehook.dll
 	$(CP) kime\except.dat

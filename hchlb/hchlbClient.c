@@ -29,18 +29,22 @@ MRESULT EXPENTRY HCHLBClientWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp
         case WM_CREATE        : return hchlbc_wmCreate( hwnd, mp1, mp2 );
         case WM_DESTROY       : return hchlbc_wmDestroy( hwnd, mp1, mp2 );
         case WM_SIZE          : return hchlbc_wmSize( hwnd, mp1, mp2 );
-        case WM_SETFOCUS      : return hchlbc_wmSetFocus( hwnd, mp1, mp2 );
+        //case WM_SETFOCUS      : return hchlbc_wmSetFocus( hwnd, mp1, mp2 );
         case WM_CHAR          : return hchlbc_wmChar( hwnd, mp1, mp2 );
-        case WM_BUTTON1DOWN   : return hchlbc_wmButton1Down( hwnd, mp1, mp2 );
-        case WM_BUTTON2DOWN   : return hchlbc_wmButton2Down( hwnd, mp1, mp2 );
+        //case WM_BUTTON1DOWN   : return hchlbc_wmButton1Down( hwnd, mp1, mp2 );
+        //case WM_BUTTON2DOWN   : return hchlbc_wmButton2Down( hwnd, mp1, mp2 );
         case WM_BUTTON1CLICK  : return hchlbc_wmButton1Click( hwnd, mp1, mp2 );
         case WM_BUTTON1DBLCLK : return hchlbc_wmButton1DblClk( hwnd, mp1, mp2 );
         case WM_PAINT         : return hchlbc_wmPaint( hwnd, mp1, mp2 );
 
         case HCHLMC_REFRESH  : return hchlbc_umRefresh( hwnd, mp1, mp2 );
-        case HCHLMC_SETFOCUS : return hchlbc_umSetFocus( hwnd, mp1, mp2 );
+        //case HCHLMC_SETFOCUS : return hchlbc_umSetFocus( hwnd, mp1, mp2 );
 
-        default              : return WinDefWindowProc( hwnd, msg, mp1, mp2 );
+        default              :
+            if(( msg >= WM_BUTTONCLICKFIRST ) && ( msg <= WM_BUTTONCLICKLAST ))
+                return ( MRESULT ) TRUE;
+
+            return WinDefWindowProc( hwnd, msg, mp1, mp2 );
     }
 }
 
@@ -237,6 +241,10 @@ MRESULT hchlbc_wmChar( HWND hwnd, MPARAM mp1, MPARAM mp2 )
         case VK_NEWLINE :
             if( hchlb->curIndex != HCHLIT_NONE )
                 notify( hwnd, HCHLN_ENTER, MPFROMSHORT( hchlb->curIndex ));
+            break;
+
+        case VK_ESC :
+            notify( hwnd, HCHLN_ENTER, MPFROMSHORT( HCHLIT_NONE ));
             break;
 
         default :

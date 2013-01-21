@@ -1,6 +1,7 @@
 #ifndef __hin_internal_h_
 #define __hin_internal_h_
 
+#define INCL_DOSSEMAPHORES
 #define INCL_PM
 #include <os2.h>
 
@@ -72,6 +73,9 @@ struct tagHIA {
     ULONG notifListAllocSize;
     HIANotifWnd *notifList;
     HIANotifWnd *responseTo;
+    HWND hwndHCHLB;
+    BOOL fRunningHCHLB;
+    int  scselIndex;
 };
 
 #define HIA_NOTIFLIST_DEFAULT_SIZE      256

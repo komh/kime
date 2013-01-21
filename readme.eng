@@ -1,0 +1,207 @@
+			K Input Method Editor v0.1.4
+
+0. Introduction
+
+  This program is made to support inputting Hangeul(Korean chars) on 
+non-Korean OS/2.
+
+1. Development Environments
+
+  - OS/2 Warp 4 for Korean with FixPak #15
+
+  - EMX 0.9d fix #4 + gcc 2.8.1
+  
+2. Requirements
+
+  It should be possible at least to print Hangeul in order to enable to input 
+Hangeul. Especially, codepage 949(codepage for Korean) should be supported. 
+Fortunately, ULS(Universal Language Supports) feature is supported since Warp 
+4 FixPak #5.
+  You should add CP949 in CONFIG.SYS as the following.
+  
+from
+	CODEPAGE=850,437     
+to
+	CODEPAGE=850,949
+
+  Of course, you can set the primary codepage as 949, but if you so, you 
+cannot use help manger on a few programs. So specifying secondary code page 
+as 949 is recommended.
+
+  And Hangeul font is needed to print Hangeul. You can use 'Times New Roman 
+WT K' font distributed for Java 2 v1.3.1 by IBM. For reference, you can you 
+any other unicode fonts such as Gulim shipped by M$ Windows for Korean, if 
+you install FreeType/2 v1.0-k5-sbit-fakebold version(improved FreeType/2 
+version for DBCS, especially for Korean).
+
+  And you should run any program which you want to input Hangeul in CP949. 
+The following batch file is helpful.
+
+---------- 949run.cmd
+@echo off
+chcp 949
+start /n /f %1 %2 %3 %4 %5 %6 %7 %8 %9
+chcp 850
+----------
+
+2-1. Test Environments
+
+  This program have been tested on Warp Server for e-Business for English 
+with FixPak #3 and Warp 4 for Korean with FixPak #15. You can use this 
+program without any conflicts with original IME on Korean Warp.
+
+3. Features
+
+  - Input Hangeul regardless of keyboard type
+  
+  - Support 2 bulsik, 3 bulsik 390, 3 bulsik final
+  
+  - Manage Hangeul input status according to window
+  
+  - Specify programs which Hangeul input is not needed
+  
+  - Supports 'Over The Spot'
+  
+  - Provide 'Font Association Setting' feature
+  
+  - Supports special chars/Hanja input
+  
+  - Workaround of IME which cannot recognize Shift+PageDown on Korean Warp
+    
+  - Enable inputting '\' on English Warp when changing CP to 949
+ 
+4. Instllation
+
+  Unzip archive file to any directory. But kimehook.dll must be in the path 
+specified by LIBPATH.
+  
+5. Usage
+  
+  Launch kime.exe on WPS or command line.
+  
+5-1. Hot keys
+
+  Shift-Space : Toggle the status of Hangeul/English of KIME
+  Ctrl-Space  : Change the keyboard layout for Hangeul of KIME
+  Right  CTRL : Call 'Hanja selection' window if inputting Hangeul, 
+                otherwise, Call 'Special char selection' window.
+  
+5-2. Mouse
+
+  Button 2 : Call pop-up menu
+  
+5-3. Menu
+
+  Hide    : Hide the status box of KIME
+  Options : Change the setting of KIME
+  Exit    : Exit KIME
+   
+5-4. Command line options
+
+  "--kbd390"      : Start KIME with 3 bulsik 390 layout
+  "--kbd3f"       : Start KIME with 3 bulsik final layout
+  "--hanjafont"   : Specify bitmap Hanja font to support 'Hanja selection'
+                    This package include HANJA.FNT.
+                         
+5-5. KIMEOPT environment variable
+  Without command line options, you can use 'KIMEOPT' environment variable. 
+Launching KIME after setting KIMEOPT=--kbd390 is the same as launching 'KIME 
+--kbd390'.
+        
+6. Limitations and Known Bugs
+
+  - if you press arrow key or enter key when inputting Hangeul on Netscape, 
+Hangeul is inputted after key processed
+    
+  - Input Hangeul on non-949 CP because KIME cannot query a codepage of 
+window. Of course, Hangeul is not inputted.
+    
+  - Status window appears when pressing virtual keys( Alt, Ctrl, Shift, Fxx ) 
+  
+  - Process 'Exception List File' on current working directory
+
+  - Cannot change the status of Hangeul/English using status window
+  
+  - Supports only PM except VIO.
+
+  - Cannot use unicode fonts for 'Font Association'
+    But, unicode fonts are supported by FreeType/2-k5-sbit-fakebold version.
+  
+  - if clicking when inputting Hangeul on E, Hangeul is located at mouse 
+    cursor position, and reversed box as selection appears at side of Hangeul.
+  
+7. To do
+
+  - Change status of input using status window
+  
+8. Exception List File
+
+  'Exception List File' is intended to avoid conflict with toggle key of 
+programs with self-IME or for programs not needing Hangeul input.
+
+  'Exception List File' is a plain text on a directory where KIME is there, 
+so you can edit it using any text editor. The format of it is to specify the 
+program name not needing Hangeul input in line unit.
+
+  Basically, EXCEPT.DAT has the following
+
+---------- EXCEPT.DAT
+HANEDIT.EXE
+HWPPM.EXE
+FOOL.EXE
+ZTELNET.EXE
+MED.EXE
+VPC.EXE
+----------  
+
+9. History
+  - v0.1.4 ( 2004/01/18 )
+    Fixed. Input status is sometimes not changed on Mozilla
+    Fixed. Cannot input special char/Hanja becuase of focus change
+    Fixed. Hangule is located at mouse cursor position if clicking while 
+           inputting Hangeul
+    Supports for Odin is improved.
+    
+  - v0.1.3 ( 2003/03/04 )
+    Added. The status of input of status window is changed according to input 
+           focus change
+    Fixed. Interim char remain if clicking mouse
+    Added. '\' is enabled on PM on English Warp when changing CP to 949  
+
+  - v0.1.2 ( 2002/03/18 )
+    Fixed. Work as Shift key is pressed when Caps Lock is ON
+    Fixed. Digits is displayed as pressing arrow keys on keypad if pressing 
+           arrow keys when Num Lock is ON on English Warp
+
+  - v0.1.1 ( 2002/01/25 )
+    Changed. Do not register at TasKist
+    Fixed. 'Special Char Selection' window appear when pressing any key with 
+           Ctrl.
+              
+  - v0.1.0 ( 2001/11/27 )
+    Added. Supports special char/Hanja input
+    Added. Supports 'Font Associatoin Setting'
+    Fixed. Function keys(Fxx) is not processed while Hangeul mode
+    
+  - v0.0.0 ( 2001/11/08 )
+    Initial version
+          
+10. Compile
+  
+  You need EMX 0.9d fix #4 + gcc 2.8.1 and GNU Make 3.76.1 or above.
+
+11. Thanks to ...
+  Moon, Yoo-Seong(kwisatz@hitel.net)
+    Author of HIA, which is a moudle for input of Hangeul used by this program
+
+  Choi, Min-Soon(josuwa77)
+    Provide Warp Server for e-Business with me.
+
+12. Contact
+  KO Myung-Hun
+  
+  e-mail : komh@chollian.net
+  ICQ    : 124861818
+  MSN    : komh@chollian.net
+  IRC    : lvzuufx, #os2 at HANIRC(irc.hanirc.org)
+  

@@ -35,6 +35,10 @@ extern "C" {
 #define HIAM_QUERYSPECIALCHARKEYCHECKPROC   ( WM_USER + 24 )
 #define HIAM_SETSPECIALCHARKEYCHECKPROC     ( WM_USER + 25 )
 
+#define HIAM_CHAR               ( WM_USER + 26 )
+#define HIAM_QUERYRUNNINGHCHLB  ( WM_USER + 27 )
+#define HIAM_DESTROYHCHLB       ( WM_USER + 28 )
+
 #define HIAN_COMPO_BEGIN        0x0000
 #define HIAN_COMPO_STEP         0x0001
 #define HIAN_COMPO_COMPLETE     0x0002
