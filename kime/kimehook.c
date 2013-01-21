@@ -40,6 +40,10 @@
 
 #include "../hchlb/hchlbdlg.h"
 
+#ifdef DEBUG
+#include <stdarg.h>
+#endif
+
 #ifndef HK_ACCEL
 #define HK_ACCEL    17
 #endif
@@ -68,9 +72,9 @@ static BOOL runningHIA = FALSE;
 static HANCHAR hchComposing = 0;
 static BOOL supportDBCS = FALSE;
 static BOOL exception = FALSE;
+static BOOL inputFocusChanged = FALSE;
 
 static PFNWP oldKimeWndProc = NULL;
-static PFNWP oldSetFocusWndProc = NULL;
 static VOID sendCharToWnd( HANCHAR hch );
 static MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 );
 
@@ -98,6 +102,41 @@ static VOID kimeSendMsgHook( PSMHSTRUCT psmh );
 static VOID initKimeStatus( HWND hwnd, BOOL ztelnet );
 static BOOL isHanjaKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isSpecialCharKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
+
+#ifdef DEBUG
+static VOID storeMsg( char *format, ... );
+#endif
+
+BOOL EXPENTRY inputHook( HAB hab, PQMSG pQmsg, USHORT fsOptions )
+{
+    if( pQmsg->msg == WM_BUTTON1DOWN || pQmsg->msg == WM_BUTTON2DOWN || pQmsg->msg == WM_BUTTON3DOWN )
+        WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
+    else if( pQmsg->msg == WM_CHAR )
+    {
+        USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
+        UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
+        UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
+        USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
+        USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
+
+        if(( fsFlags & KC_SCANCODE ) && ( ucScancode == 0x2B ) && ( fsFlags & KC_INVALIDCHAR ))
+        {
+            fsFlags &= ~KC_INVALIDCHAR;
+            fsFlags |= KC_CHAR;
+
+            usCh = 0x5C;
+
+            pQmsg->mp1 = MPFROMSH2CH( fsFlags, ucRepeat, ucScancode );
+            pQmsg->mp2 = MPFROM2SHORT( usCh, usVk );
+
+            WinPostMsg( pQmsg->hwnd, WM_CHAR, pQmsg->mp1, pQmsg->mp2 );
+
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 BOOL EXPENTRY accelHook( HAB hab, PQMSG pQmsg, USHORT fsOptions )
 {
@@ -129,6 +168,7 @@ BOOL EXPENTRY installHook( HAB habAB, PHOOKDATA phd )
         return FALSE;
 
     hab = habAB;
+    WinSetHook( hab, NULLHANDLE, HK_INPUT, ( PFN )inputHook, hm );
     WinSetHook( hab, NULLHANDLE, HK_ACCEL, ( PFN )accelHook, hm );
     WinSetHook( hab, NULLHANDLE, HK_SENDMSG, ( PFN )sendMsgHook, hm );
     WinSetHook( hab, NULLHANDLE, HK_DESTROYWINDOW, (PFN)destroyWindowHook, hm );
@@ -152,6 +192,7 @@ VOID EXPENTRY uninstallHook( VOID )
 {
     WinSubclassWindow( hwndKime, oldKimeWndProc );
 
+    WinReleaseHook( hab, NULLHANDLE, HK_INPUT, ( PFN )inputHook, hm );
     WinReleaseHook( hab, NULLHANDLE, HK_ACCEL, ( PFN )accelHook, hm );
     WinReleaseHook( hab, NULLHANDLE, HK_SENDMSG, ( PFN )sendMsgHook, hm );
     WinReleaseHook( hab, NULLHANDLE, HK_DESTROYWINDOW, (PFN)destroyWindowHook, hm );
@@ -246,14 +287,6 @@ VOID sendCharToWnd( HANCHAR hch )
                 MPFROM2SHORT( hch, 0 ));
 }
 
-MRESULT EXPENTRY newSetFocusWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
-{
-    if( msg == WM_SETFOCUS )
-        return 0;
-
-    return oldSetFocusWndProc( hwnd, msg, mp1, mp2 );
-}
-
 #define KIMEM_CALLHANJAINPUT    ( WM_USER + 1000 )
 
 MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
@@ -263,6 +296,8 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         runningHIA = TRUE;
         WinSendMsg( hwndHIA, WM_CHAR, MPFROMSH2CH( KC_LONEKEY | KC_SCANCODE, 0, 0x5B ), 0 );
         runningHIA = FALSE;
+
+        WinSetFocus( HWND_DESKTOP, hwndCurrentInput );
 
         return 0;
     }
@@ -335,6 +370,8 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
                         runningHIA = TRUE;
                         WinSendMsg( hwndHIA, WM_CHAR, 0, 0 ); // call special char input
                         runningHIA = FALSE;
+
+                        WinSetFocus( HWND_DESKTOP, hwndCurrentInput);
                         break;
 
                 } // note switch end
@@ -459,7 +496,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         static BOOL fromHook = FALSE;
 
         USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
-        //UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
+        UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
         UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
         USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
         USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
@@ -468,6 +505,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         BOOL  hanIn;
         BOOL  consumed;
         BOOL  callHanja;
+        BOOL  patched;
 
         if( runningHIA )
             return FALSE;
@@ -486,49 +524,69 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             return TRUE;
         }
 
-        callHanja = isHanjaKey( fsFlags, ucScancode, usVk, usCh );
-
-        if((( fsFlags & KC_KEYUP ) ||
-            (( fsFlags & 0x0FFF ) == KC_SCANCODE ) ||
-            !( fsFlags & KC_SCANCODE )) && !callHanja )
-            return FALSE;
+        patched = FALSE;
 
         if(( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_PAGEDOWN + 0x90 ))
         {
             usVk = VK_PAGEDOWN;
 
             pQmsg->mp2 = MPFROM2SHORT( usCh, usVk );
+
+            patched = TRUE;
         }
 
-        if( hwndCurrentInput != pQmsg->hwnd )
+        if(( fsFlags & KC_SCANCODE ) && ( ucScancode == 0x2B ) && ( fsFlags & KC_INVALIDCHAR ))
         {
+            fsFlags &= ~KC_INVALIDCHAR;
+            fsFlags |= KC_CHAR;
+
+            usCh = 0x5C;
+
+            pQmsg->mp1 = MPFROMSH2CH( fsFlags, ucRepeat, ucScancode );
+            pQmsg->mp2 = MPFROM2SHORT( usCh, usVk );
+
+            patched = TRUE;
+        }
+
+        callHanja = isHanjaKey( fsFlags, ucScancode, usVk, usCh );
+        if((( fsFlags & KC_KEYUP ) ||
+            (( fsFlags & 0x0FFF ) == KC_SCANCODE ) ||
+            !( fsFlags & KC_SCANCODE )) && !callHanja )
+            return FALSE;
+
+        if( inputFocusChanged || ( hwndCurrentInput != pQmsg->hwnd ))
+        {
+            inputFocusChanged = FALSE;
+
             hwndCurrentInput = pQmsg->hwnd;
+
             supportDBCS = checkDBCSSupport( hwndCurrentInput );
             exception = checkExceptWindow( hwndCurrentInput );
-
-            if( supportDBCS && !exception )
-                initKimeStatus( hwndCurrentInput, FALSE );
         }
+
+        if( !hwndCurrentInput || !supportDBCS || exception )
+            return FALSE;
+
+        if(( fsFlags & ( KC_ALT | KC_CTRL | KC_SHIFT )) &&
+           (( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_SPACE )))
+            return ( BOOL )WinSendMsg( hwndHIA, WM_CHAR, pQmsg->mp1, pQmsg->mp2 );
 
         flHIAState = (ULONG) WinSendMsg( hwndHIA, HIAM_QUERYSTATE, 0L, 0L );
         hanIn = flHIAState & HIAST_HANMODE;
 
-        if(( hanIn || (( usVk == VK_SPACE ) && ( fsFlags & KC_VIRTUALKEY ))) &&
-           supportDBCS  && !exception )
+        if( hanIn || patched )
         {
             //MPARAM mp2;
 
             consumed = FALSE;
 
-            if(( usVk == VK_INSERT ) || ( usVk == VK_TAB ) ||
-               (( usVk == VK_SPACE ) && !( fsFlags & ( KC_ALT | KC_CTRL | KC_SHIFT ))))
-                WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
-            else if( callHanja )
+            if( callHanja )
             {
                 WinPostMsg( hwndKime, KIMEM_CALLHANJAINPUT, 0, 0 );
                 consumed = TRUE;
             }
-            else
+            else if((( fsFlags & KC_CHAR ) || (( fsFlags & KC_VIRTUALKEY ) && (( usVk == VK_ESC ) || ( usVk == VK_SHIFT )))) &&
+                    !(( fsFlags & KC_VIRTUALKEY ) && (( usVk == VK_TAB ) || ( usVk == VK_SPACE ))))
             {
                 runningHIA = TRUE;
 
@@ -539,11 +597,15 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 
                 runningHIA = FALSE;
             }
+            else if( !isHanjaKey( fsFlags | KC_LONEKEY, ucScancode, usVk, usCh ))
+                WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
 
             if( !consumed )
             {
-                if(( fsFlags & ( KC_CTRL | KC_ALT )) ||
-                   (( fsFlags & KC_VIRTUALKEY ) && ( usVk >= VK_F1 ) && ( usVk <= VK_F24 )))
+                if( fsFlags & ( KC_CTRL | KC_ALT ))
+                    return FALSE;
+
+                if(( fsFlags & KC_VIRTUALKEY ) && ( usVk >= VK_F1 ) && ( usVk <= VK_F24 ))
                     return FALSE;
 
                 WinPostMsg( pQmsg->hwnd, WM_CHAR, 0, 0 );
@@ -573,16 +635,27 @@ VOID ztelnetSendMsgHook( PSMHSTRUCT psmh )
     }
 }
 
-
 VOID kimeSendMsgHook( PSMHSTRUCT psmh )
 {
+    if( runningHIA )
+        return;
+
     if( psmh->msg == WM_SETFOCUS )
     {
         //HWND hwnd = HWNDFROMMP( psmh->mp1 );
         BOOL focus = SHORT1FROMMP( psmh->mp2 );
 
-        if( focus && !runningHIA )
+        if( focus )
+        {
             WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
+
+            if( hwndCurrentInput != psmh->hwnd )
+            {
+                inputFocusChanged = TRUE;
+                hwndCurrentInput = psmh->hwnd;
+                initKimeStatus( hwndCurrentInput, FALSE );
+            }
+        }
     }
 }
 
@@ -619,4 +692,25 @@ BOOL isSpecialCharKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usC
 
     return FALSE;
 }
+
+#ifdef DEBUG
+VOID storeMsg( char *format, ... )
+{
+    static char buf[ 257 ] = { 0, };
+    PVOID msg = NULL;
+
+    va_list arg;
+
+    va_start( arg, format );
+    vsprintf( buf, format, arg );
+    va_end( arg );
+
+    DosAllocSharedMem( &msg, NULL, strlen( buf ) + 1, fALLOCSHR );
+    strcpy( msg, buf );
+
+    WinSendMsg( hwndKHS, KHSM_STOREMSG, ( MPARAM )msg, 0 );
+
+    DosFreeMem( msg );
+}
+#endif
 

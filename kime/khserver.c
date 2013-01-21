@@ -44,6 +44,7 @@ static MRESULT khs_umIsExceptWindow( HWND, MPARAM, MPARAM );
 
 #ifdef DEBUG
 static MRESULT khs_umStoreKeyInfo( HWND, MPARAM, MPARAM );
+static MRESULT khs_umStoreMsg( HWND, MPARAM, MPARAM );
 #endif
 
 static MRESULT EXPENTRY khs_wndProc( HWND, ULONG, MPARAM, MPARAM );
@@ -81,6 +82,7 @@ MRESULT EXPENTRY khs_wndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
 
 #ifdef DEBUG
         case KHSM_STOREKEYINFO      : return khs_umStoreKeyInfo( hwnd, mp1, mp2 );
+        case KHSM_STOREMSG          : return khs_umStoreMsg( hwnd, mp1, mp2 );
 #endif
     }
 
@@ -371,9 +373,23 @@ MRESULT khs_umStoreKeyInfo( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     USHORT  usCh = SHORT1FROMMP( mp2 );
     USHORT  usVk = SHORT2FROMMP( mp2 );
 
-    fprintf( pkhscd->fp, "fl : %04X, rp : %02d, sc : %03d, ch : %05d, vk : %02X\n",
+    fprintf( pkhscd->fp, "fl : %04X, rp : %02d, sc : %02X, ch : %02X, vk : %02X\n",
                          fsFlags, ucRepeat, ucScancode, usCh, usVk );
+    fflush( pkhscd->fp );
 
     return 0;
 }
+
+MRESULT khs_umStoreMsg( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+    PKHSCD  pkhscd = WinQueryWindowPtr( hwnd, 0 );
+
+    DosGetSharedMem( mp1, PAG_READ | PAG_WRITE );
+
+    fprintf( pkhscd->fp, "%s\n", ( PSZ )mp1 );
+    fflush( pkhscd->fp );
+
+    return 0;
+}
+
 #endif

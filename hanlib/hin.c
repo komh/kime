@@ -423,8 +423,6 @@ USHORT ckey;
             return FALSE;
 
         case VK_SHIFT :
-        case VK_CTRL :
-        case VK_ALT :
             return FALSE;
         }   // switch
 

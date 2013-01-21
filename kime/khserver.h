@@ -22,6 +22,7 @@
 
 #ifdef DEBUG
 #define KHSM_STOREKEYINFO           ( WM_USER + 100 )
+#define KHSM_STOREMSG               ( WM_USER + 101 )
 #endif
 
 #ifdef __cplusplus
