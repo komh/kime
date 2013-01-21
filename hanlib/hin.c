@@ -53,6 +53,7 @@ static void HIA_NotifyToList(HIA* hia,USHORT notifCode,MPARAM mp2);
 static void HIA_NotifyToConnected(HIA* hia,USHORT notifCode,MPARAM mp2);
 
 static USHORT hia_convertkey (ULONG kbdtype,USHORT key);
+static UCHAR hia_transkey( USHORT fsFlags, UCHAR ucScancode, UCHAR ucChar );
 static ULONG hia_iskeypadkey(UCHAR ucScancode);
 
 static BOOL hia_defaultHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
@@ -100,9 +101,40 @@ static unsigned char kbdtable[3][96] = {
   0xC2, 0x87, 0xD1, 0x25, 0x5C, 0x2F, 0x7E, 0x7F   /* xyz{|}~  */
 }};
 
+static UCHAR kbdKeyTransTable[][ 2 ] = // ascii code on no shift, ascii code on shift
+{{   0,   0 }, {    0,   0 }, { '1', '!' }, { '2', '@' }, {  '3', '#' }, { '4', '$' },
+ { '5', '%' }, {  '6', '^' }, { '7', '&' }, { '8', '*' }, {  '9', '(' }, { '0', ')' },
+ { '-', '_' }, {  '=', '+' }, {   0,   0 }, {   0,   0 },
+ { 'q', 'Q' }, {  'w', 'W' }, { 'e', 'E' }, { 'r', 'R' }, {  't', 'T' }, { 'y', 'Y' },
+ { 'u', 'U' }, {  'i', 'I' }, { 'o', 'O' }, { 'p', 'P' }, {  '[', '{' }, { ']', '}' },
+ {   0,   0 }, {    0,   0 },
+ { 'a', 'A' }, {  's', 'S' }, { 'd', 'D' }, { 'f', 'F' }, {  'g', 'G' }, { 'h', 'H' },
+ { 'j', 'J' }, {  'k', 'K' }, { 'l', 'L' }, { ';', ':' }, { '\'', '"' }, { '`', '~' },
+ {   0,   0 }, { '\\', '|' }, { 'z', 'Z' }, { 'x', 'X' }, {  'c', 'C' }, { 'v', 'V' },
+ { 'b', 'B' }, {  'n', 'N' }, { 'm', 'M' }, { ',', '<' }, {  '.', '>' }, { '/', '?' },
+};
+
 USHORT hia_convertkey (ULONG kbdtype,USHORT key)
 {
     return (kbdtable[kbdtype][key-32] & 0xFF);
+}
+
+UCHAR hia_transkey( USHORT fsFlags, UCHAR ucScancode, UCHAR ucChar )
+{
+    UCHAR   result = ucChar;
+
+    if( ucScancode < 54 )
+    {
+        BOOL  shiftOn = ( fsFlags & KC_SHIFT ) ? TRUE : FALSE;
+        BOOL  capsLockOn = WinGetKeyState(HWND_DESKTOP,VK_CAPSLOCK) ? TRUE : FALSE;
+
+        UCHAR uch = kbdKeyTransTable[ ucScancode ][ shiftOn ];
+
+        if( uch != 0 )
+            result = ( shiftOn ^ capsLockOn ) ? toupper( uch ) : tolower( uch );
+    }
+
+    return result;
 }
 
 ULONG hia_iskeypadkey(UCHAR ucScancode)
@@ -391,6 +423,8 @@ USHORT ckey;
             return FALSE;
 
         case VK_SHIFT :
+        case VK_CTRL :
+        case VK_ALT :
             return FALSE;
         }   // switch
 
@@ -427,7 +461,8 @@ USHORT ckey;
             ucChar = tolower(ucChar);
             }
         }
-    ckey = hia_convertkey(hia->kbdtype,ucChar);
+
+    ckey = hia_convertkey(hia->kbdtype, hia_transkey( fsFlags, ucScancode, ucChar ));
     {
     HANCHAR completedHch;
     HANCHAR workingHch;
@@ -744,15 +779,16 @@ int i;
 
 void HIA_NotifyToConnected(HIA *hia,USHORT notifCode,MPARAM mp2)
 {
-/*
+#ifndef __KIME__
     WinSendMsg(hia->responseTo->hwnd,WM_CONTROL,
         MPFROM2SHORT(hia->responseTo->id,notifCode),mp2);
-*/
+#else
     if(( notifCode == HIAN_INSERTHCH ) || ( notifCode == HIAN_COMPO_COMPLETE ))
         WinSendMsg(hia->responseTo->hwnd,WM_CONTROL,
             MPFROM2SHORT(hia->responseTo->id,notifCode),mp2);
     else
         WinPostMsg(hia->responseTo->hwnd,WM_CONTROL,
             MPFROM2SHORT(hia->responseTo->id,notifCode),mp2);
+#endif
 }
 

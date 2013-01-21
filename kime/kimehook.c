@@ -70,6 +70,7 @@ static BOOL supportDBCS = FALSE;
 static BOOL exception = FALSE;
 
 static PFNWP oldKimeWndProc = NULL;
+static PFNWP oldSetFocusWndProc = NULL;
 static VOID sendCharToWnd( HANCHAR hch );
 static MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 );
 
@@ -94,7 +95,7 @@ static BOOL ztelnetAccelHook( PQMSG pQmsg );
 static BOOL kimeAccelHook( PQMSG pQmsg );
 static VOID ztelnetSendMsgHook( PSMHSTRUCT psmh );
 static VOID kimeSendMsgHook( PSMHSTRUCT psmh );
-static VOID initKimeStatus( HWND hwnd );
+static VOID initKimeStatus( HWND hwnd, BOOL ztelnet );
 static BOOL isHanjaKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isSpecialCharKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 
@@ -245,6 +246,14 @@ VOID sendCharToWnd( HANCHAR hch )
                 MPFROM2SHORT( hch, 0 ));
 }
 
+MRESULT EXPENTRY newSetFocusWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
+{
+    if( msg == WM_SETFOCUS )
+        return 0;
+
+    return oldSetFocusWndProc( hwnd, msg, mp1, mp2 );
+}
+
 #define KIMEM_CALLHANJAINPUT    ( WM_USER + 1000 )
 
 MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
@@ -252,7 +261,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
     if( msg == KIMEM_CALLHANJAINPUT )
     {
         runningHIA = TRUE;
-        WinSendMsg( hwndHIA, WM_CHAR, MPFROMSH2CH( KC_SCANCODE, 0, 0x5B ), 0 );
+        WinSendMsg( hwndHIA, WM_CHAR, MPFROMSH2CH( KC_LONEKEY | KC_SCANCODE, 0, 0x5B ), 0 );
         runningHIA = FALSE;
 
         return 0;
@@ -456,12 +465,15 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         ULONG flHIAState;
         BOOL hanIn;
         BOOL consumed;
+        BOOL callHanja;
 
         if( runningHIA )
             return FALSE;
 
-        if(( fsFlags & KC_KEYUP ) || (( fsFlags & 0x0FFF ) == KC_SCANCODE ) ||
-           !( fsFlags & KC_SCANCODE ))
+        callHanja = isHanjaKey( fsFlags, ucScancode, usVk, usCh );
+
+        if((( fsFlags & KC_KEYUP ) || (( fsFlags & 0x0FFF ) == KC_SCANCODE ) ||
+            !( fsFlags & KC_SCANCODE )) && !callHanja )
             return FALSE;
 
         if(( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_PAGEDOWN + 0x90 ))
@@ -478,7 +490,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             exception = checkExceptWindow( hwndCurrentInput );
 
             if( supportDBCS && !exception )
-                initKimeStatus( hwndCurrentInput );
+                initKimeStatus( hwndCurrentInput, FALSE );
         }
 
         flHIAState = (ULONG) WinSendMsg( hwndHIA, HIAM_QUERYSTATE, 0L, 0L );
@@ -494,7 +506,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             if(( usVk == VK_INSERT ) || ( usVk == VK_TAB ) ||
                (( usVk == VK_SPACE ) && !( fsFlags & ( KC_ALT | KC_CTRL | KC_SHIFT ))))
                 WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
-            else if( isHanjaKey( fsFlags, ucScancode, usVk, usCh ))
+            else if( callHanja )
             {
                 WinPostMsg( hwndKime, KIMEM_CALLHANJAINPUT, 0, 0 );
                 consumed = TRUE;
@@ -538,7 +550,7 @@ VOID ztelnetSendMsgHook( PSMHSTRUCT psmh )
 
         if( focus )
         {
-            initKimeStatus( psmh->hwnd );
+            initKimeStatus( psmh->hwnd, TRUE );
             //WinSetWindowPos( hwndKime, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
             //WinInvalidateRect( hwndKime, NULL, TRUE );
         }
@@ -558,7 +570,7 @@ VOID kimeSendMsgHook( PSMHSTRUCT psmh )
     }
 }
 
-VOID initKimeStatus( HWND hwnd )
+VOID initKimeStatus( HWND hwnd, BOOL ztelnet )
 {
     BOOL hanStatus;
     BOOL imStatus;
@@ -568,7 +580,8 @@ VOID initKimeStatus( HWND hwnd )
 
     hanStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS, MPFROMHWND( hwnd ), 0 );
     WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( hanStatus ), 0 );
-    WinSendMsg( hwndHIA, HIAM_SETHANMODE, MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
+    if( !ztelnet )
+        WinSendMsg( hwndHIA, HIAM_SETHANMODE, MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
 
     imStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYIMSTATUS, MPFROMHWND( hwnd ), 0 );
     WinSendMsg( hwndKime, KIMEM_SETIM, MPFROMLONG( imStatus ), 0 );
@@ -576,11 +589,8 @@ VOID initKimeStatus( HWND hwnd )
 
 BOOL isHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh )
 {
-    if( fsFlags & KC_KEYUP )
-        return FALSE;
-
-    if(( fsFlags & KC_SCANCODE ) && ( ucScancode == 0x5B ) &&
-       !( fsFlags & ( KC_ALT | KC_SHIFT )))         // if right CTRL
+    if(( fsFlags & KC_LONEKEY ) && ( fsFlags & KC_SCANCODE ) &&
+       ( ucScancode == 0x5B ) && !( fsFlags & ( KC_ALT | KC_SHIFT )))         // if right CTRL
         return TRUE;
 
     return FALSE;

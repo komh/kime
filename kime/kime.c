@@ -19,6 +19,8 @@
 
 #define KIME_PROFILE "KIME.INI"
 
+//#define ADD_TO_SWITCH_ENTRY
+
 #define BUTTON_COUNT    2               // han/eng, char/line
 #define BORDER_SIZE     1
 
@@ -262,7 +264,9 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 {
     PKIME kime;
     PCREATESTRUCT pcs = ( PCREATESTRUCT )mp2;
+#ifdef ADD_TO_SWITCH_ENTRY
     SWCNTRL swc;
+#endif
     LONG x = BORDER_SIZE * 2;
     LONG y = BORDER_SIZE * 2;
     LONG cx = ( pcs->cx - BORDER_SIZE * 3 * 2 ) / BUTTON_COUNT;
@@ -296,6 +300,7 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     kime->line = FALSE;
     WinSetWindowPtr( hwnd, 0, kime );
 
+#ifdef ADD_TO_SWITCH_ENTRY
     swc.hwnd = hwnd;
     swc.hwndIcon = NULLHANDLE;
     swc.hprog = NULLHANDLE;
@@ -307,6 +312,7 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     strcpy( swc.szSwtitle, pcs->pszText );
 
     WinAddSwitchEntry( &swc );
+#endif
 
     hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, hanStatusStr[ kime->han ], WS_VISIBLE,
                      x, y, cx, cy, hwnd, HWND_TOP, IDB_HANENG,
@@ -343,8 +349,9 @@ MRESULT wmDestroy( HWND hwnd, MPARAM mp1, MPARAM mp2 )
         if( kime->hwndHIA != NULLHANDLE )
             WinSendMsg( kime->hwndHIA, HIAM_UNREGISTERNOTIFY, MPFROMLONG( hwnd ), 0);
 
+#ifdef ADD_TO_SWITCH_ENTRY
         WinRemoveSwitchEntry( WinQuerySwitchHandle( hwnd, 0 ));
-
+#endif
         free( kime );
     }
 
@@ -522,11 +529,11 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
             switch( SHORT1FROMMP( mp1 ))
             {
                 case IDB_HANENG :
-                    WinSendMsg( hwnd, KIMEM_CHANGEHAN, 0, 0 );
+                    //WinSendMsg( hwnd, KIMEM_CHANGEHAN, 0, 0 );
                     break;
 
                 case IDB_IM :
-                    WinSendMsg( hwnd, KIMEM_CHANGEIM, 0, 0 );
+                    //WinSendMsg( hwnd, KIMEM_CHANGEIM, 0, 0 );
                     break;
 
 /*
