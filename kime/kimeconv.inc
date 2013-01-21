@@ -1,0 +1,53 @@
+static UCHAR kbdConvTable[][ 4 ] = // { 3 bul, 2 bul first, 2 bul second, shift }
+{{'`',   0,   0, FALSE }, {'1', 'g',   0, FALSE }, {'2', 't',   0, TRUE  },
+ {'3', 'q',   0, FALSE }, {'4', 'y',   0, FALSE }, {'5', 'b',   0, FALSE },
+ {'6', 'i',   0, FALSE }, {'7', 'p',   0, TRUE  }, {'8', 'm', 'l', FALSE },
+ {'9', 'n',   0, FALSE }, {'0', 'z',   0, FALSE }, {'-',   0,   0, FALSE },
+ {'=',   0,   0, FALSE }, {'\\',  0,   0, FALSE },
+ {'~',   0,   0, FALSE }, {'!', 'w',   0, FALSE }, {'@',   0,   0, FALSE },
+ {'#',   0,   0, FALSE }, {'$',   0,   0, FALSE }, {'%',   0,   0, FALSE },
+ {'^',   0,   0, FALSE }, {'&',   0,   0, FALSE }, {'*',   0,   0, FALSE },
+ {'(',   0,   0, FALSE }, {')',   0,   0, FALSE }, {'_',   0,   0, FALSE },
+ {'+',   0,   0, FALSE }, {'|',   0,   0, FALSE },
+ {'q', 't',   0, FALSE }, {'w', 'f',   0, FALSE }, {'e', 'u',   0, FALSE },
+ {'r', 'o',   0, FALSE }, {'t', 'j',   0, FALSE }, {'y', 'f',   0, FALSE },
+ {'u', 'e',   0, FALSE }, {'i', 'a',   0, FALSE }, {'o', 'c',   0, FALSE },
+ {'p', 'v',   0, FALSE }, {'[',   0,   0, FALSE }, {']',   0,   0, FALSE },
+ {'Q', 'v',   0, FALSE }, {'W', 'x',   0, FALSE }, {'E', 'z',   0, FALSE },
+ {'R', 'o',   0, TRUE  }, {'T', ';',   0, FALSE }, {'Y', '<',   0, FALSE },
+ {'U', '7',   0, FALSE }, {'I', '8',   0, FALSE }, {'O', '9',   0, FALSE },
+ {'P', '>',   0, FALSE }, {'{',   0,   0, FALSE }, {'}',   0,   0, FALSE },
+ {'a', 'd',   0, FALSE }, {'s',   0,   0, FALSE }, {'d', 'l',   0, FALSE },
+ {'f', 'k',   0, FALSE }, {'g', 'm',   0, FALSE }, {'h', 's',   0, FALSE },
+ {'j', 'd',   0, FALSE }, {'k', 'r',   0, FALSE }, {'l', 'w',   0, FALSE },
+ {';', 'q',   0, FALSE }, {'\'','x',   0, FALSE },
+ {'A', 'e',   0, FALSE }, {'S', 's', 'g', FALSE }, {'D', 'f', 'r', FALSE },
+ {'F', 'r',   0, TRUE  }, {'G', '/',   0, FALSE }, {'H','\'',   0, FALSE },
+ {'J', '4',   0, FALSE }, {'K', '5',   0, FALSE }, {'L', '6',   0, FALSE },
+ {':',   0,   0, FALSE }, {'"',   0,   0, FALSE },
+ {'z', 'a',   0, FALSE }, {'x', 'r',   0, FALSE }, {'c', 'p',   0, FALSE },
+ {'v', 'h',   0, FALSE }, {'b', 'n',   0, FALSE }, {'n', 't',   0, FALSE },
+ {'m', 'g',   0, FALSE }, {',',   0,   0, FALSE }, {'.',   0,   0, FALSE },
+ {'/', 'h',   0, FALSE },
+ {'Z', 'c',   0, FALSE }, {'X', 'q', 't', FALSE }, {'C', 'f', 'a', FALSE },
+ {'V', 'f', 'g', FALSE }, {'B', '!',   0, FALSE }, {'N', '0',   0, FALSE },
+ {'M', '1',   0, FALSE }, {'<', '2',   0, FALSE }, {'>', '3',   0, FALSE },
+ {'?',   0,   0, FALSE },
+ {  0,                 }};
+
+static UCHAR kbdKeyTransTable[][ 2 ] = // ascii code on no shift, ascii code on shift
+{{   0,   0 }, {    0,   0 }, { '1', '!' }, { '2', '@' }, {  '3', '#' }, { '4', '$' },
+ { '5', '%' }, {  '6', '^' }, { '7', '&' }, { '8', '*' }, {  '9', '(' }, { '0', ')' },
+ { '-', '_' }, {  '=', '+' }, {   0,   0 }, {   0,   0 },
+ { 'q', 'Q' }, {  'w', 'W' }, { 'e', 'E' }, { 'r', 'R' }, {  't', 'T' }, { 'y', 'Y' },
+ { 'u', 'U' }, {  'i', 'I' }, { 'o', 'O' }, { 'p', 'P' }, {  '[', '{' }, { ']', '}' },
+ {   0,   0 }, {    0,   0 },
+ { 'a', 'A' }, {  's', 'S' }, { 'd', 'D' }, { 'f', 'F' }, {  'g', 'G' }, { 'h', 'H' },
+ { 'j', 'J' }, {  'k', 'K' }, { 'l', 'L' }, { ';', ':' }, { '\'', '"' }, { '`', '~' },
+ {   0,   0 }, { '\\', '|' }, { 'z', 'Z' }, { 'x', 'X' }, {  'c', 'C' }, { 'v', 'V' },
+ { 'b', 'B' }, {  'n', 'N' }, { 'm', 'M' }, { ',', '<' }, {  '.', '>' }, { '/', '?' },
+};
+
+
+
+

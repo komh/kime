@@ -1,0 +1,8 @@
+LIBRARY KIMEHOOK
+DATA SINGLE SHARED
+
+EXPORTS installHook
+        uninstallHook
+        kimeOpt
+
+
