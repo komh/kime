@@ -190,6 +190,7 @@ VOID loadOpt( POPTDLGPARAM pOpt )
     kimeOpt.kbdLayout = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_KBDLAYOUT, KL_KBD2 );
     kimeOpt.patch3bul = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCH3BUL, TRUE );
     kimeOpt.patchChat = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCHCHAT, TRUE );
+    kimeOpt.useOS2IME = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_USEOS2IME, FALSE );
 }
 
 VOID saveOpt( POPTDLGPARAM pOpt )
@@ -204,6 +205,9 @@ VOID saveOpt( POPTDLGPARAM pOpt )
 
     _ltoa( kimeOpt.patchChat, szOptStr, 10 );
     PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCHCHAT, szOptStr );
+
+    _ltoa( kimeOpt.useOS2IME, szOptStr, 10 );
+    PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_USEOS2IME, szOptStr );
 }
 
 VOID processArg( INT argc, CHAR **argv )
@@ -227,7 +231,8 @@ VOID processArg( INT argc, CHAR **argv )
             i++;
             hanjafontpath = argv[ i ];
         }
-
+        else if( strcmp( argv[ i ], "--useos2ime" ) == 0 )
+            kimeOpt.useOS2IME = TRUE;
     }
 }
 

@@ -40,6 +40,9 @@
 
 #include "../hchlb/hchlbdlg.h"
 
+#include "../im32/im32.h"
+#include "../im32/toggle.h"
+
 #ifdef DEBUG
 #include <stdarg.h>
 
@@ -61,7 +64,7 @@
 
 #define SBCS_CHARS  "`1234567890-=\\~!@#$%^&*()_+|[]{};':\",./<>?"
 
-OPTDLGPARAM kimeOpt = { KL_KBD2, TRUE, TRUE };
+OPTDLGPARAM kimeOpt = { KL_KBD2, TRUE, TRUE, FALSE };
 
 static HAB hab = 0;
 static HWND hwndKime = NULLHANDLE;
@@ -206,6 +209,8 @@ BOOL EXPENTRY installHook( HAB habAB, PHOOKDATA phd )
     if( DosQueryModuleHandle( DLL_NAME, &hm ) != 0 )
         return FALSE;
 
+    IM32Init();
+
     hab = habAB;
     WinSetHook( hab, NULLHANDLE, HK_INPUT, ( PFN )inputHook, hm );
     WinSetHook( hab, NULLHANDLE, HK_ACCEL, ( PFN )accelHook, hm );
@@ -237,6 +242,8 @@ VOID EXPENTRY uninstallHook( VOID )
     WinReleaseHook( hab, NULLHANDLE, HK_DESTROYWINDOW, (PFN)destroyWindowHook, hm );
 
     WinBroadcastMsg(HWND_DESKTOP, WM_NULL, 0, 0, BMSG_FRAMEONLY | BMSG_POST);
+
+    IM32Term();
 }
 
 BOOL isDblJaum( UCHAR uch )
@@ -639,6 +646,31 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         if(( fsFlags & ( KC_CTRL | KC_SHIFT )) &&
            (( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_SPACE )))
             supportDBCS = checkDBCSSupport( hwndCurrentInput );
+
+        if( kimeOpt.useOS2IME )
+        {
+            if( exception /* || !supportDBCS */)
+                return FALSE;
+
+            if((( fsFlags & ( KC_ALT | KC_CTRL | KC_SHIFT )) == KC_SHIFT ) &&
+               (( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_SPACE )))
+            {
+                toggleIMEHanEng( pQmsg->hwnd );
+                return TRUE;
+            }
+
+#if 0
+            if( callHanja )
+            {
+                callIMEHanja( pQmsg->hwnd );
+                return TRUE;
+            }
+#endif
+            return FALSE;
+        }
+
+        dprintf(("hwndCurrentInput %04X, supportDBCS %d, exception %d\n",
+                  hwndCurrentInput, supportDBCS, exception ));
 
         if( !hwndCurrentInput || !supportDBCS || exception )
             return FALSE;

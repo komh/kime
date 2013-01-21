@@ -33,6 +33,7 @@ typedef struct tagOPTDLGPARAM {
     ULONG   kbdLayout;
     BOOL    patch3bul;
     BOOL    patchChat;
+    BOOL    useOS2IME;
 } OPTDLGPARAM, *POPTDLGPARAM;
 
 MRESULT EXPENTRY optDlgProc( HWND, ULONG, MPARAM, MPARAM );
