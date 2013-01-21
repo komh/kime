@@ -1,5 +1,5 @@
 #define INCL_PM
-#define INCL_DOSMEMMGR
+#define INCL_DOS
 #include <os2.h>
 
 #include <stdio.h>
@@ -13,8 +13,7 @@
 
 #define EXCEPT_LIST_FILE    "EXCEPT.DAT"
 
-#define DOSQSS_BUFSIZE 128000l
-#define RESERVED 0
+#define DOSQSS_BUFSIZE  10240
 
 typedef struct tagKHSCD
 {
@@ -24,7 +23,7 @@ typedef struct tagKHSCD
     PRECTL      pCursorPos;
     PHWNDLIST   list;
     char        *exceptListBuf;
-    char        *dosqssBuf;
+    PQTOPLEVEL  pQTopLevel;
 } KHSCD, *PKHSCD;
 
 static MRESULT khs_wmCreate( HWND, MPARAM, MPARAM );
@@ -108,7 +107,7 @@ MRESULT khs_wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
         return MRFROMLONG( TRUE );
     }
 
-    if( DosAllocMem(( PPVOID )&pkhscd->dosqssBuf, DOSQSS_BUFSIZE, fALLOC ) != 0 )
+    if( DosAllocMem(( PPVOID )&pkhscd->pQTopLevel, DOSQSS_BUFSIZE, fALLOC ) != 0 )
     {
         DosFreeMem( pkhscd->pCursorPos );
         DosFreeMem( pkhscd );
@@ -119,7 +118,7 @@ MRESULT khs_wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     pkhscd->list = hwndlistCreate();
     if( pkhscd->list == NULL )
     {
-        DosFreeMem( pkhscd->dosqssBuf );
+        DosFreeMem( pkhscd->pQTopLevel );
         DosFreeMem( pkhscd->pCursorPos );
         DosFreeMem( pkhscd );
 
@@ -147,7 +146,7 @@ MRESULT khs_wmDestroy( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     exceptDestroyListBuf( pkhscd->exceptListBuf );
     hwndlistDestroy( pkhscd->list );
 
-    DosFreeMem( pkhscd->dosqssBuf );
+    DosFreeMem( pkhscd->pQTopLevel );
     DosFreeMem( pkhscd->pCursorPos );
     DosFreeMem( pkhscd );
 
@@ -319,46 +318,52 @@ MRESULT khs_umIsExceptWindow( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     PKHSCD      pkhscd = WinQueryWindowPtr( hwnd, 0 );
     HWND        hwndTarget = HWNDFROMMP( mp1 );
     PID         pid;
-    PQPROCESS   p;
-    PQTHREAD    t;
-    PQMODULE    m;
-    PCHAR       name;
+    PCHAR       modulePath;
+    PCHAR       moduleName;
+    ULONG       maxPathLen;
     APIRET      rc;
     BOOL        result;
-    int         i;
 
     WinQueryWindowProcess( hwndTarget, &pid, NULL );
 
-    memset(pkhscd->dosqssBuf,0,DOSQSS_BUFSIZE);
+#ifdef DEBUG
+    fprintf( pkhscd->fp, "PID = %x\n", pid );
+#endif
 
-    rc = DosQuerySysState(0x3f, RESERVED, RESERVED, RESERVED, (PCHAR)pkhscd->dosqssBuf, DOSQSS_BUFSIZE);
+    memset( pkhscd->pQTopLevel, 0, DOSQSS_BUFSIZE );
+
+    rc = DosQuerySysState( 0x01, 0, pid, 1, pkhscd->pQTopLevel, DOSQSS_BUFSIZE );
     if( rc != 0 )
         return FALSE;
 
-    p = ((PQTOPLEVEL)pkhscd->dosqssBuf)->procdata;
-    while (p && ( p->rectype == 1 ) && ( p->pid != pid )) {
-        t = p->threads;
-        for (i=0; i<p->threadcnt; i++,t++);
-        p = (PQPROCESS)t;
-    }
+    DosQuerySysInfo( QSV_MAX_PATH_LENGTH, QSV_MAX_PATH_LENGTH, &maxPathLen, sizeof( ULONG ));
 
-    if( p->pid != pid )
-        return FALSE;
+    modulePath = malloc( maxPathLen );
+    DosQueryModuleName( pkhscd->pQTopLevel->procdata->hndmod, maxPathLen, modulePath );
 
-    m = ((PQTOPLEVEL)pkhscd->dosqssBuf)->moddata;
-    while (m && ( p->hndmod != m->hndmod ))
-        m = m->next;
+#ifdef DEBUG
+    fprintf( pkhscd->fp, "Module path = %s\n", modulePath );
+#endif
 
-    if( !m )
-        return FALSE;
-
-    name = strrchr( m->name, '\\' );
-    if( name == NULL )
-        name = m->name;
+    moduleName = strrchr( modulePath, '\\' );
+    if( moduleName == NULL )
+        moduleName = modulePath;
     else
-        name++;
+        moduleName++;
 
-    result = exceptFindName( pkhscd->exceptListBuf, name );
+#ifdef DEBUG
+    fprintf( pkhscd->fp, "Module name = %s\n", moduleName );
+#endif
+
+    result = exceptFindName( pkhscd->exceptListBuf, moduleName );
+
+    free( modulePath );
+
+#ifdef DEBUG
+    fprintf( pkhscd->fp, "exceptFindName() = %ld\n", result );
+
+    fflush( pkhscd->fp );
+#endif
 
     return MRFROMLONG( result );
 }
