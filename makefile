@@ -3,7 +3,7 @@
 CP = copy
 
 release :
-	$(MAKE) -C hchlb release KIME=1
+#	$(MAKE) -C hchlb release KIME=1
 	$(MAKE) -C hanlib release KIME=1
 	$(MAKE) -C hst release KIME=1
 	$(MAKE) -C kime
@@ -12,7 +12,7 @@ release :
 	$(CP) kime\except.dat
 
 debug :
-	$(MAKE) -C hchlb release KIME=1
+#	$(MAKE) -C hchlb release KIME=1
 	$(MAKE) -C hanlib release KIME=1
 	$(MAKE) -C hst release KIME=1
 	$(MAKE) -C kime DEBUG=1
