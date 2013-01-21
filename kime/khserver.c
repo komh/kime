@@ -127,12 +127,11 @@ MRESULT khs_wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     }
 
 #ifdef DEBUG
-    pkhscd->fp = fopen("msg", "wt");
+    pkhscd->fp = fopen("debug.log", "wt");
 #endif
     pkhscd->exceptListBuf = exceptCreateListBuf( EXCEPT_LIST_FILE );
 
     WinSetWindowPtr( hwnd, 0, pkhscd );
-
 
     return FALSE;
 }
