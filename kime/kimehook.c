@@ -788,6 +788,12 @@ VOID initKimeStatus( HWND hwnd, BOOL ztelnet )
     BOOL hanStatus;
     BOOL imStatus;
 
+    if( checkExceptWindow( hwnd ))
+    {
+        WinSendMsg( hwndKime, WM_COMMAND, MPFROM2SHORT( IDM_HIDE, 0 ), MPFROM2SHORT( CMDSRC_MENU, 0 ));
+        return;
+    }
+
     if( !findWnd( hwnd ))
         addWnd( hwnd );
 
