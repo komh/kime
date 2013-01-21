@@ -126,7 +126,7 @@ UCHAR hia_transkey( USHORT fsFlags, UCHAR ucScancode, UCHAR ucChar )
     if( ucScancode < 54 )
     {
         BOOL  shiftOn = ( fsFlags & KC_SHIFT ) ? TRUE : FALSE;
-        BOOL  capsLockOn = WinGetKeyState(HWND_DESKTOP,VK_CAPSLOCK) ? TRUE : FALSE;
+        BOOL  capsLockOn = ( WinGetKeyState(HWND_DESKTOP,VK_CAPSLOCK) & 0x01 ) ? TRUE : FALSE;
 
         UCHAR uch = kbdKeyTransTable[ ucScancode ][ shiftOn ];
 
@@ -452,6 +452,8 @@ USHORT ckey;
         return MRFROMLONG(TRUE);
         }
 
+    ucChar = hia_transkey( fsFlags, ucScancode, ucChar );
+
     if (WinGetKeyState(HWND_DESKTOP,VK_CAPSLOCK))
         {
         if (fsFlags & KC_SHIFT)
@@ -462,7 +464,7 @@ USHORT ckey;
             }
         }
 
-    ckey = hia_convertkey(hia->kbdtype, hia_transkey( fsFlags, ucScancode, ucChar ));
+    ckey = hia_convertkey(hia->kbdtype, ucChar );
     {
     HANCHAR completedHch;
     HANCHAR workingHch;

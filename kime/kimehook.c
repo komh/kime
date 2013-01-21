@@ -456,23 +456,40 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 {
     if( pQmsg->msg == WM_CHAR )
     {
+        static BOOL fromHook = FALSE;
+
         USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
-        UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
+        //UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
         UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
         USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
         USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
 
         ULONG flHIAState;
-        BOOL hanIn;
-        BOOL consumed;
-        BOOL callHanja;
+        BOOL  hanIn;
+        BOOL  consumed;
+        BOOL  callHanja;
 
         if( runningHIA )
             return FALSE;
 
+        if( fromHook )
+        {
+            fromHook = FALSE;
+
+            return FALSE;
+        }
+
+        if(( pQmsg->mp1 == 0 ) && ( pQmsg->mp2 == 0 ))
+        {
+            fromHook = TRUE;
+
+            return TRUE;
+        }
+
         callHanja = isHanjaKey( fsFlags, ucScancode, usVk, usCh );
 
-        if((( fsFlags & KC_KEYUP ) || (( fsFlags & 0x0FFF ) == KC_SCANCODE ) ||
+        if((( fsFlags & KC_KEYUP ) ||
+            (( fsFlags & 0x0FFF ) == KC_SCANCODE ) ||
             !( fsFlags & KC_SCANCODE )) && !callHanja )
             return FALSE;
 
@@ -499,7 +516,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         if(( hanIn || (( usVk == VK_SPACE ) && ( fsFlags & KC_VIRTUALKEY ))) &&
            supportDBCS  && !exception )
         {
-            MPARAM mp2;
+            //MPARAM mp2;
 
             consumed = FALSE;
 
@@ -515,10 +532,10 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             {
                 runningHIA = TRUE;
 
-                mp2 = pQmsg->mp2;
-                kbdKeyTranslate( pQmsg );
+                //mp2 = pQmsg->mp2;
+                //kbdKeyTranslate( pQmsg );
                 consumed = (BOOL)WinSendMsg( hwndHIA, WM_CHAR, pQmsg->mp1, pQmsg->mp2 );
-                pQmsg->mp2 = mp2;
+                //pQmsg->mp2 = mp2;
 
                 runningHIA = FALSE;
             }
@@ -529,9 +546,8 @@ BOOL kimeAccelHook( PQMSG pQmsg )
                    (( fsFlags & KC_VIRTUALKEY ) && ( usVk >= VK_F1 ) && ( usVk <= VK_F24 )))
                     return FALSE;
 
-                WinPostMsg( pQmsg->hwnd, WM_CHAR,
-                            MPFROMSH2CH( fsFlags & ~KC_SCANCODE, ucRepeat, 0 ),
-                            pQmsg->mp2 );
+                WinPostMsg( pQmsg->hwnd, WM_CHAR, 0, 0 );
+                WinPostMsg( pQmsg->hwnd, WM_CHAR, pQmsg->mp1, pQmsg->mp2 );
             }
 
             return TRUE;
