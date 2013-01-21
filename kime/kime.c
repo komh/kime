@@ -13,6 +13,7 @@
 
 #include "inputbox.h"
 #include "../hanlib/han.h"
+#include "../hst/hst.h"
 
 #define KIME_NAME    "K Input Method Editor"
 
@@ -43,6 +44,8 @@ static HWND hwndPopup = NULLHANDLE;
 static PFNWP oldButtonWndProc = NULL;
 
 static PVOID checkKime = NULL;
+
+static PSZ  hanjafontpath = NULL;
 
 static VOID run( HAB );
 static VOID destroy( VOID );
@@ -106,6 +109,9 @@ VOID run( HAB hab )
         sizeof( PVOID )
     );
 
+    if( !RegisterHanStaticTextControl( hab ))
+        return;
+
     if( !RegisterHanAutomataClass( hab ))
         return;
 
@@ -115,42 +121,37 @@ VOID run( HAB hab )
     if( !RegisterKimeHookServer( hab ))
         return;
 
-    hwnd = WinCreateWindow( HWND_DESKTOP, WC_KIME, KIME_NAME, WS_VISIBLE,
+    hwnd = WinCreateWindow( HWND_DESKTOP, WC_KIME, KIME_NAME, 0,
                             0, 0, 0, 0, NULLHANDLE, HWND_TOP, ID_KIME,
                             NULL, NULL );
 
     if( hwnd != NULLHANDLE )
     {
-        HINI hini;
-        POINTL ptl;
-        ULONG bufSize = sizeof( ptl );
-        SWP swp;
         LONG charWidth, charHeight;
 
         queryCharSize( hwnd, &charWidth, &charHeight );
 
-        hini = PrfOpenProfile( hab, KIME_PROFILE );
-        if( !PrfQueryProfileData( hini, "Setting", "Position", &ptl, &bufSize ))
-        {
-            ptl.x = 0;
-            ptl.y = 0;
-        }
+        if( !WinRestoreWindowPos( "KIME", "Position", hwnd ))
+           WinSetWindowPos( hwnd, HWND_TOP, 0, 0, WIN_WIDTH, WIN_HEIGHT, SWP_MOVE | SWP_SIZE );
 
-        WinSetWindowPos( hwnd, HWND_TOP, ptl.x, ptl.y, WIN_WIDTH, WIN_HEIGHT, SWP_MOVE | SWP_SIZE | SWP_SHOW | SWP_ZORDER );
+        WinInvalidateRect( hwnd, NULL, TRUE );
+        WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
 
         houtInit( hab, 128 );
+        if( hanjafontpath != NULL )
+        {
+            static char external_hanjafontbuf[HOUT_HANJAFONTBUFSIZE];
+
+            houtReadHanjaFont( hanjafontpath,external_hanjafontbuf);
+            houtSetHanjaFont(external_hanjafontbuf);
+        }
 
         while( WinGetMsg( hab, &qm, NULLHANDLE, 0, 0 ))
             WinDispatchMsg( hab, &qm );
 
         houtClose();
 
-        WinQueryWindowPos( hwnd, &swp );
-        ptl.x = swp.x;
-        ptl.y = swp.y;
-
-        PrfWriteProfileData( hini, "Setting", "Position", &ptl, sizeof( ptl ));
-        PrfCloseProfile( hini );
+        WinStoreWindowPos( "KIME", "Position", hwnd );
 
         WinDestroyWindow( hwnd );
     }
@@ -193,6 +194,12 @@ VOID processArg( INT argc, CHAR **argv )
             kimeOpt.kbdLayout = KL_KBD390;
         else if( strcmp( argv[ i ], "--kbd3f" ) == 0 )
             kimeOpt.kbdLayout = KL_KBD3F;
+        else if( strcmp( argv[ i ], "--hanjafont" ) == 0 )
+        {
+            i++;
+            hanjafontpath = argv[ i ];
+        }
+
     }
 }
 

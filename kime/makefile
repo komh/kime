@@ -2,17 +2,26 @@ EXE_NAME   = kime.exe
 SRC_LIST   = kime.c kimedlg.c inputbox.c khserver.c hwndlist.c except.c
 RC_LIST    = kime.rc
 A_LIST     =
-LIB_LIST   = kimehook.lib $(HAN_LIB)
+LIB_LIST   = kimehook.lib $(HAN_LIB) $(HST_LIB)
+
+COPY = +copy
 
 GNU_MAKE = make
+
 HAN_LIB_DIR = ../hanlib
 HAN_LIB = $(HAN_LIB_DIR)/han.lib
+
+HST_LIB_DIR = ../hst
+HST_LIB = $(HST_LIB_DIR)/hst.lib
+
+HCHLBDLG_DIR = ..\hchlb
+HCHLBDLG_RES = $(HCHLBDLG_DIR)\hchlbdlg.res
 
 .INCLUDE : "makefile.inc"
 
 kime.obj: kime.c kime.h kimedlg.h kimehook.h khserver.h inputbox.h \
-          $(HAN_LIB_DIR)/han.h $(HAN_LIB_DIR)/hch.h $(HAN_LIB_DIR)/hout.h \
-          $(HAN_LIB_DIR)/hin.h
+          ../hanlib/han.h ../hanlib/hch.h ../hanlib/hout.h ../hanlib/hin.h \
+          ../hst/hst.h
 
 kimedlg.obj: kimedlg.c kimedlg.h
 
@@ -35,5 +44,15 @@ kimehook.lib : kimehook.dll kimehook.def
 kimehook.dll : kimehook.obj $(HAN_LIB) kimehook.def
     $(CC) $(LFDLL) $&
 
+kime.res : kime.rc kime.h kimedlg.h $(HCHLBDLG_RES)
+    $(RC) -r kime.rc
+    $(COPY) /b kime.res + $(HCHLBDLG_RES) kime.res
+
 $(HAN_LIB) :
     $(GNU_MAKE) -C $(HAN_LIB_DIR) han.lib
+
+$(HST_LIB) :
+    $(GNU_MAKE) -C $(HST_LIB_DIR) hst.lib
+
+$(HCHLBDLG_RES) :
+    $(GNU_MAKE) -C $(HCHLBDLG_DIR) hchlbdlg.res

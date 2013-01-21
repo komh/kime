@@ -8,11 +8,22 @@ extern "C" {
 #define IDG_PATCHGROUP  100
 #define IDB_3BUL        101
 #define IDB_CHATLINE    102
+#define IDHS_3BUL       111
+#define IDHS_CHATLINE   112
 
 #define IDG_KBDLAYOUT   200
 #define IDB_KBD2        201
 #define IDB_KBD390      202
 #define IDB_KBD3F       203
+#define IDHS_KBD2       211
+#define IDHS_KBD390     212
+#define IDHS_KBD3F      213
+
+#define IDG_FONTASSOCIATION 300
+#define IDLB_FONTLIST       301
+#define IDB_FONTAPPLY       302
+#define IDHS_CURRENT        303
+#define IDHS_CURRENTFONT    304
 
 #define KL_KBD2     0
 #define KL_KBD390   1
