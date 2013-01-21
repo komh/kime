@@ -330,6 +330,12 @@ VOID sendCharToWnd( HANCHAR hch )
 
 MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
 {
+    if( msg == KIMEM_RELOAD )
+    {
+        WinSendMsg( hwndKHS, KHSM_RELOADEXCEPTFILE, 0, 0 );
+        hwndCurrentInput = NULLHANDLE;
+    }
+
     if( msg == KIMEM_CALLHANJAINPUT )
     {
         initKimeStatus( hwndCurrentInput, FALSE );

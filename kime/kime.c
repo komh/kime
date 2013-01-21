@@ -586,6 +586,12 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
                     WinShowWindow( hwnd, FALSE );
                     break;
 
+                case IDM_RELOAD :
+                {
+                    WinSendMsg( hwnd, KIMEM_RELOAD, 0, 0 );
+                    break;
+                }
+
                 case IDM_OPTIONS :
                 {
                     PKIME kime = WinQueryWindowPtr( hwnd, 0 );

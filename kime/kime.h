@@ -11,8 +11,9 @@
 
 #define ID_POPUP        100
 #define IDM_HIDE        101
-#define IDM_OPTIONS     102
-#define IDM_EXIT        103
+#define IDM_RELOAD      102
+#define IDM_OPTIONS     103
+#define IDM_EXIT        110
 
 #define ID_HIA          200
 #define ID_INPUTBOX     201
@@ -27,5 +28,7 @@
 #define KIMEM_CHANGEIM       ( WM_USER + 4 )
 #define KIMEM_SETIM          ( WM_USER + 5 )
 #define KIMEM_QUERYIM        ( WM_USER + 6 )
+
+#define KIMEM_RELOAD         ( WM_USER + 7 )
 
 #endif

@@ -41,6 +41,7 @@ static MRESULT khs_umChangeImStatus( HWND, MPARAM, MPARAM );
 static MRESULT khs_umSetImStatus( HWND, MPARAM, MPARAM );
 static MRESULT khs_umCheckDBCSSupport( HWND, MPARAM, MPARAM );
 static MRESULT khs_umIsExceptWindow( HWND, MPARAM, MPARAM );
+static MRESULT khs_umReloadExceptFile( HWND, MPARAM, MPARAM );
 
 #ifdef DEBUG
 static MRESULT khs_umStoreKeyInfo( HWND, MPARAM, MPARAM );
@@ -79,6 +80,7 @@ MRESULT EXPENTRY khs_wndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         case KHSM_SETIMSTATUS       : return khs_umSetImStatus( hwnd, mp1, mp2 );
         case KHSM_CHECKDBCSSUPPORT  : return khs_umCheckDBCSSupport( hwnd, mp1, mp2 );
         case KHSM_ISEXCEPTWINDOW    : return khs_umIsExceptWindow( hwnd, mp1, mp2 );
+        case KHSM_RELOADEXCEPTFILE  : return khs_umReloadExceptFile( hwnd, mp1, mp2 );
 
 #ifdef DEBUG
         case KHSM_STOREKEYINFO      : return khs_umStoreKeyInfo( hwnd, mp1, mp2 );
@@ -362,6 +364,14 @@ MRESULT khs_umIsExceptWindow( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     return MRFROMLONG( result );
 }
 
+MRESULT khs_umReloadExceptFile( HWND hwnd, MPARAM mp1, MPARAM mp2 )
+{
+    PKHSCD      pkhscd = WinQueryWindowPtr( hwnd, 0 );
+
+    exceptDestroyListBuf( pkhscd->exceptListBuf );
+
+    pkhscd->exceptListBuf = exceptCreateListBuf( EXCEPT_LIST_FILE );
+}
 
 #ifdef DEBUG
 MRESULT khs_umStoreKeyInfo( HWND hwnd, MPARAM mp1, MPARAM mp2 )

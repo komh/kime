@@ -19,6 +19,7 @@
 #define KHSM_CHECKDBCSSUPPORT       ( WM_USER + 10 )
 
 #define KHSM_ISEXCEPTWINDOW         ( WM_USER + 11 )
+#define KHSM_RELOADEXCEPTFILE       ( WM_USER + 12 )
 
 #ifdef DEBUG
 #define KHSM_STOREKEYINFO           ( WM_USER + 100 )
