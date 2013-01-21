@@ -15,9 +15,14 @@
 #include "../hanlib/han.h"
 #include "../hst/hst.h"
 
-#define KIME_NAME    "K Input Method Editor"
+#define KIME_NAME   "K Input Method Editor"
 
-#define KIME_PROFILE "KIME.INI"
+#define PRF_APP             "KIME"
+#define PRF_KEY_POSITION    "Position"
+#define PRF_KEY_KBDLAYOUT   "KbdLayout"
+#define PRF_KEY_PATCH3BUL   "Patch3Bul"
+#define PRF_KEY_PATCHCHAT   "PatchChat"
+#define PRF_KEY_USEOS2IME   "UseOS2IME"
 
 //#define ADD_TO_SWITCH_ENTRY
 
@@ -52,6 +57,8 @@ static PSZ  hanjafontpath = NULL;
 static VOID run( HAB );
 static VOID destroy( VOID );
 static BOOL alreadyLoaded( VOID );
+static VOID loadOpt( POPTDLGPARAM );
+static VOID saveOpt( POPTDLGPARAM );
 static VOID processArg( INT, CHAR ** );
 static VOID queryCharSize( HWND, LONG *, LONG * );
 
@@ -133,7 +140,7 @@ VOID run( HAB hab )
 
         queryCharSize( hwnd, &charWidth, &charHeight );
 
-        if( !WinRestoreWindowPos( "KIME", "Position", hwnd ))
+        if( !WinRestoreWindowPos( PRF_APP, PRF_KEY_POSITION, hwnd ))
            WinSetWindowPos( hwnd, HWND_TOP, 0, 0, WIN_WIDTH, WIN_HEIGHT, SWP_MOVE | SWP_SIZE );
 
         WinInvalidateRect( hwnd, NULL, TRUE );
@@ -153,7 +160,7 @@ VOID run( HAB hab )
 
         houtClose();
 
-        WinStoreWindowPos( "KIME", "Position", hwnd );
+        WinStoreWindowPos( PRF_APP, PRF_KEY_POSITION, hwnd );
 
         WinDestroyWindow( hwnd );
     }
@@ -178,13 +185,32 @@ BOOL alreadyLoaded( VOID )
     return FALSE;
 }
 
+VOID loadOpt( POPTDLGPARAM pOpt )
+{
+    kimeOpt.kbdLayout = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_KBDLAYOUT, KL_KBD2 );
+    kimeOpt.patch3bul = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCH3BUL, TRUE );
+    kimeOpt.patchChat = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCHCHAT, TRUE );
+}
+
+VOID saveOpt( POPTDLGPARAM pOpt )
+{
+    CHAR    szOptStr[ 20 ];
+
+    _ltoa( kimeOpt.kbdLayout, szOptStr, 10 );
+    PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_KBDLAYOUT, szOptStr );
+
+    _ltoa( kimeOpt.patch3bul, szOptStr, 10 );
+    PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCH3BUL, szOptStr );
+
+    _ltoa( kimeOpt.patchChat, szOptStr, 10 );
+    PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCHCHAT, szOptStr );
+}
+
 VOID processArg( INT argc, CHAR **argv )
 {
     INT i;
 
-    kimeOpt.kbdLayout = KL_KBD2;
-    kimeOpt.patch3bul = TRUE;
-    kimeOpt.patchChat = TRUE;
+    loadOpt( &kimeOpt );
 
     for( i = 1; i < argc; i ++ )
     {
@@ -564,7 +590,11 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
                     PKIME kime = WinQueryWindowPtr( hwnd, 0 );
 
                     if( WinDlgBox( HWND_DESKTOP, hwnd, optDlgProc, NULLHANDLE, IDD_OPTDLG, &kimeOpt ) == DID_OK )
+                    {
+                        saveOpt( &kimeOpt );
+
                         WinSendMsg( kime->hwndHIA, HIAM_SETKBDTYPE, MPFROMLONG( kimeOpt.kbdLayout ), 0 );
+                    }
 
                     break;
                 }
