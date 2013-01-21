@@ -365,12 +365,15 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
                         break;
 
                     case HIAN_COMPO_BEGIN:
+                    case HIAN_COMPO_STEP:
+                    case HIAN_COMPO_STEPBACK:
                         hchComposing = SHORT2FROMMP(mp2);
 
                         setInputBoxHch( hchComposing );
                         showInputBox( TRUE );
                         break;
 
+#if 0
                     case HIAN_COMPO_STEP:
                         hchComposing = SHORT2FROMMP(mp2);
 
@@ -382,6 +385,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
 
                         setInputBoxHch( hchComposing );
                         break;
+#endif
 
                     case HIAN_COMPO_CANCEL:
                         setInputBoxHch( 0 );
