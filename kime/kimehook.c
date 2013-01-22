@@ -546,8 +546,6 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 {
     if( pQmsg->msg == WM_CHAR || pQmsg->msg == WM_CHAR_SPECIAL)
     {
-        static BOOL fromHook = FALSE;
-
         USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
         UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
         UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
@@ -563,20 +561,6 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         if( queryRunningHCHLB())
         {
             WinSendMsg( hwndHIA, HIAM_CHAR, pQmsg->mp1, pQmsg->mp2 );
-            return TRUE;
-        }
-
-        if( fromHook )
-        {
-            fromHook = FALSE;
-
-            return FALSE;
-        }
-
-        if(( pQmsg->mp1 == 0 ) && ( pQmsg->mp2 == 0 ))
-        {
-            fromHook = TRUE;
-
             return TRUE;
         }
 
@@ -720,8 +704,6 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 
                 if( pQmsg->msg == WM_CHAR )
                 {
-                    WinPostMsg( pQmsg->hwnd, pQmsg->msg, 0, 0 );
-
 #if 0
                     // IME do as the following.
                     if( HIUSHORT( flHIAState ) && ( fsFlags & KC_CHAR ) && ( usCh == ' ' ))
