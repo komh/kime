@@ -177,6 +177,7 @@ BOOL EXPENTRY inputHook( HAB hab, PQMSG pQmsg, USHORT fsOptions )
         }
     }
 #endif
+
     return FALSE;
 }
 
@@ -701,12 +702,10 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             else if((( fsFlags & KC_CHAR ) || (( fsFlags & KC_VIRTUALKEY ) && (( usVk == VK_ESC ) || ( usVk == VK_SHIFT )))) &&
                     !(( fsFlags & KC_VIRTUALKEY ) && (( usVk == VK_TAB )/* || ( usVk == VK_SPACE )*/)))
             {
-
                 //mp2 = pQmsg->mp2;
                 //kbdKeyTranslate( pQmsg );
                 consumed = (BOOL)WinSendMsg( hwndHIA, WM_CHAR, pQmsg->mp1, pQmsg->mp2 );
                 //pQmsg->mp2 = mp2;
-
             }
             else if( !isHanjaKey( fsFlags | KC_LONEKEY, ucScancode, usVk, usCh ))
                 WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
