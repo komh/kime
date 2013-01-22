@@ -623,7 +623,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 
             hwndCurrentInput = pQmsg->hwnd;
 
-            supportDBCS = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS, MPFROMHWND( hwndCurrentInput ), 0 );
+            supportDBCS = checkDBCSSupport( hwndCurrentInput );
             exception = checkExceptWindow( hwndCurrentInput );
         }
 #else
@@ -635,7 +635,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 
             initKimeStatus( hwndCurrentInput, FALSE );
 
-            supportDBCS = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS, MPFROMHWND( hwndCurrentInput ), 0 );
+            supportDBCS = checkDBCSSupport( hwndCurrentInput );
             exception = checkExceptWindow( hwndCurrentInput );
         }
 #endif
