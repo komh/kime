@@ -704,7 +704,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
                 if( fsFlags & ( KC_CTRL | KC_ALT ))
                     return FALSE;
 
-                if(( fsFlags & KC_VIRTUALKEY ) && ( usVk >= VK_F1 ) && ( usVk <= VK_F24 ))
+                if(( fsFlags & KC_VIRTUALKEY ) && (( usVk == VK_SHIFT ) || (( usVk >= VK_F1 ) && ( usVk <= VK_F24 ))))
                     return FALSE;
 
                 if( pQmsg->msg == WM_CHAR )
