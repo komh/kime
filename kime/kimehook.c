@@ -667,10 +667,12 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         flHIAState = (ULONG) WinSendMsg( hwndHIA, HIAM_QUERYSTATE, 0L, 0L );
         hanIn = flHIAState & HIAST_HANMODE;
 
+#if 0
         if( !HIUSHORT( flHIAState ) &&
             ( fsFlags & ( KC_VIRTUALKEY | KC_CTRL | KC_ALT )) &&
             !callHanja )
             return FALSE;
+#endif
 
         if( hanIn /*|| patched */ )
         {
@@ -696,6 +698,9 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 
             if( !consumed )
             {
+                if( !HIUSHORT( flHIAState ))
+                    return FALSE;
+
                 if( fsFlags & ( KC_CTRL | KC_ALT ))
                     return FALSE;
 
