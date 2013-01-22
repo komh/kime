@@ -92,6 +92,8 @@ static MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM
 
 #define WM_CHAR_SPECIAL               0x04ba     // for Odin
 
+#define ODIN_SUPPORT_IN_INPUT_HOOK
+
 #define ALARM   WinAlarm( HWND_DESKTOP, WA_NOTE )
 
 #define setInputBoxHch( hch ) \
@@ -152,26 +154,21 @@ BOOL EXPENTRY inputHook( HAB hab, PQMSG pQmsg, USHORT fsOptions )
             }
         }
     }
-#if 0
-    else if( pQmsg->msg == WM_CHAR )
+#ifdef ODIN_SUPPORT_IN_INPUT_HOOK
+    else if( pQmsg->msg == WM_CHAR_SPECIAL ) // for Odin
     {
+        ULONG   flHIAState = (ULONG) WinSendMsg( hwndHIA, HIAM_QUERYSTATE, 0L, 0L );
         USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
-        UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
-        UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
-        USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
-        USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
+        //UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
+        //UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
+        //USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
+        //USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
 
-        if(( fsFlags & KC_SCANCODE ) && ( ucScancode == 0x2B ) && ( fsFlags & KC_INVALIDCHAR ))
+
+        if( !( fsFlags & KC_KEYUP ) && HIUSHORT( flHIAState ))
         {
-            fsFlags &= ~KC_INVALIDCHAR;
-            fsFlags |= KC_CHAR;
-
-            usCh = 0x5C;
-
-            pQmsg->mp1 = MPFROMSH2CH( fsFlags, ucRepeat, ucScancode );
-            pQmsg->mp2 = MPFROM2SHORT( usCh, usVk );
-
-            WinPostMsg( pQmsg->hwnd, WM_CHAR, pQmsg->mp1, pQmsg->mp2 );
+            WinSendMsg( hwndHIA, HIAM_COMPLETEHCH, 0, 0 );
+            WinPostMsg( pQmsg->hwnd, pQmsg->msg, pQmsg->mp1, pQmsg->mp2 );
 
             return TRUE;
         }
@@ -544,7 +541,11 @@ BOOL ztelnetAccelHook( PQMSG pQmsg )
 
 BOOL kimeAccelHook( PQMSG pQmsg )
 {
-    if( pQmsg->msg == WM_CHAR || pQmsg->msg == WM_CHAR_SPECIAL)
+    if( pQmsg->msg == WM_CHAR
+#ifndef ODIN_SUPPORT_IN_INPUT_HOOK
+        || pQmsg->msg == WM_CHAR_SPECIAL
+#endif
+      )
     {
         USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
         UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
@@ -707,8 +708,11 @@ BOOL kimeAccelHook( PQMSG pQmsg )
                 if(( fsFlags & KC_VIRTUALKEY ) && (( usVk == VK_SHIFT ) || (( usVk >= VK_F1 ) && ( usVk <= VK_F24 ))))
                     return FALSE;
 
+#ifndef ODIN_SUPPORT_IN_INPUT_HOOK
                 if( pQmsg->msg == WM_CHAR )
                 {
+#endif
+
 #if 0
                     // IME do as the following.
                     if( HIUSHORT( flHIAState ) && ( fsFlags & KC_CHAR ) && ( usCh == ' ' ))
@@ -717,7 +721,10 @@ BOOL kimeAccelHook( PQMSG pQmsg )
                         pQmsg->mp2 = MPFROM2SHORT( usCh, 0 );
                     }
 #endif
+
+#ifndef ODIN_SUPPORT_IN_INPUT_HOOK
                 }
+#endif
                 WinPostMsg( pQmsg->hwnd, pQmsg->msg, pQmsg->mp1, pQmsg->mp2 );
             }
 
