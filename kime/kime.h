@@ -31,4 +31,6 @@
 
 #define KIMEM_RELOAD         ( WM_USER + 7 )
 
+#define KIMEM_CHANGEHANHOOK  ( WM_USER + 8 )
+
 #endif

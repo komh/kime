@@ -352,6 +352,13 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         return 0;
     }
 
+    if( !kimeOpt.useOS2IME && msg == KIMEM_CHANGEHANHOOK )
+    {
+        WinSendMsg( hwndHIA, HIAM_CHANGEHANMODE, 0, 0 );
+
+        return 0;
+    }
+
     if( msg == WM_CONTROL )
     {
         switch (SHORT1FROMMP(mp1))

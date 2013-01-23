@@ -344,14 +344,14 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     WinAddSwitchEntry( &swc );
 #endif
 
-    hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, hanStatusStr[ kime->han ], WS_VISIBLE,
+    hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, hanStatusStr[ kime->han ], WS_VISIBLE | BS_NOPOINTERFOCUS,
                      x, y, cx, cy, hwnd, HWND_TOP, IDB_HANENG,
                      NULL, NULL );
 
     oldButtonWndProc = WinSubclassWindow( hwndBtn, newButtonWndProc );
 
     x += cx + BORDER_SIZE * 2;
-    hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, imStatusStr[ kime->line ], WS_VISIBLE,
+    hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, imStatusStr[ kime->line ], WS_VISIBLE | BS_NOPOINTERFOCUS,
                      x, y, cx, cy, hwnd, HWND_TOP, IDB_IM,
                      NULL, NULL );
 
@@ -565,7 +565,7 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
                 case IDB_HANENG :
                     WinInvalidateRect( hwnd, NULL, TRUE );
                     WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
-                    //WinSendMsg( hwnd, KIMEM_CHANGEHAN, 0, 0 );
+                    WinPostMsg( hwnd, KIMEM_CHANGEHANHOOK, 0, 0 );
                     break;
 
                 case IDB_IM :
