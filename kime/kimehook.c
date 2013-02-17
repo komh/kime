@@ -274,10 +274,13 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
 
     if( msg == KIMEM_CHANGEHANHOOK )
     {
-        WinSendMsg( hwndHIA, HIAM_CHANGEHANMODE, 0, 0 );
+        if( checkExceptWindow( hwndCurrentInput ))
+            return 0;
 
         if( kimeOpt.useOS2IME )
             toggleOS2IMEHanEng( hwndCurrentInput );
+        else if( checkDBCSSupport( hwndCurrentInput ))
+            WinSendMsg( hwndHIA, HIAM_CHANGEHANMODE, 0, 0 );
 
         return 0;
     }
