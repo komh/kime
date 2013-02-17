@@ -49,6 +49,9 @@ MRESULT optDlg_wmInitDlg( HWND hwnd, MPARAM mp1, MPARAM mp2 )
         WinSendDlgItemMsg( hwnd, id, BM_SETCHECK,
                            MPFROMLONG( id == ( IDB_KBD2 + param->kbdLayout ) ? 1 : 0 ), 0 );
 
+    WinSendDlgItemMsg( hwnd, IDB_USEOS2IME, BM_SETCHECK,
+                       MPFROMLONG( param->useOS2IME ), 0 );
+
     PrfQueryProfileString( HINI_USERPROFILE, "PM_SystemFonts", "PM_AssociateFont",
                            "¾øÀ½", fontName, FACESIZE );
     for( pch = fontName; ( *pch != 0 ) && (* pch != ';' ); pch ++ );
@@ -147,6 +150,7 @@ MRESULT optDlg_wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     if( SHORT1FROMMP( mp1 ) == DID_OK )
     {
         param->kbdLayout = LONGFROMMR( WinSendDlgItemMsg( hwnd, IDB_KBD2, BM_QUERYCHECKINDEX, 0, 0 ));
+        param->useOS2IME = LONGFROMMR( WinSendDlgItemMsg( hwnd, IDB_USEOS2IME, BM_QUERYCHECK, 0, 0 ));
 
         WinDismissDlg( hwnd, DID_OK );
     }

@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#define IDG_OS2IME      100
+#define IDB_USEOS2IME   101
+#define IDHS_USEOS2IME  111
+
 #define IDG_KBDLAYOUT   200
 #define IDB_KBD2        201
 #define IDB_KBD390      202
