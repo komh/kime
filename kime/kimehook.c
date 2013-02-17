@@ -123,6 +123,7 @@ static VOID initKimeStatus( HWND hwnd, BOOL ztelnet );
 static BOOL isHanjaKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isSpecialCharKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isHCHLB( HWND hwnd );
+static VOID toggleOS2IMEHangEng( HWND hwnd );
 
 #ifdef DEBUG
 static VOID storeMsg( char *format, ... );
@@ -352,9 +353,12 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         return 0;
     }
 
-    if( !kimeOpt.useOS2IME && msg == KIMEM_CHANGEHANHOOK )
+    if( msg == KIMEM_CHANGEHANHOOK )
     {
         WinSendMsg( hwndHIA, HIAM_CHANGEHANMODE, 0, 0 );
+
+        if( kimeOpt.useOS2IME )
+            toggleOS2IMEHanEng( hwndCurrentInput );
 
         return 0;
     }
@@ -648,7 +652,8 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             if((( fsFlags & ( KC_ALT | KC_CTRL | KC_SHIFT )) == KC_SHIFT ) &&
                (( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_SPACE )))
             {
-                toggleIMEHanEng( pQmsg->hwnd );
+                toggleOS2IMEHanEng( hwndCurrentInput );
+
                 return TRUE;
             }
 
@@ -833,6 +838,18 @@ BOOL isHCHLB( HWND hwnd )
 
     WinQueryClassName( WinQueryWindow( hwnd, QW_OWNER ), sizeof( szBuffer ), szBuffer );
     return ( BOOL )( strcmp( szBuffer, WC_HCHLB ) == 0 );
+}
+
+VOID toggleOS2IMEHanEng( HWND hwnd )
+{
+    BOOL fHanStatus;
+
+    toggleIMEHanEng( hwnd );
+
+    fHanStatus = queryIMEHanEng( hwnd );
+    WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
+                MPFROMLONG( fHanStatus ));
+    WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( fHanStatus ), 0 );
 }
 
 #ifdef DEBUG

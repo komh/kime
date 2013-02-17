@@ -2,6 +2,20 @@
 #include <os2im.h>
 #include "toggle.h"
 
+BOOL queryIMEHanEng( HWND hwnd )
+{
+    HIMI himi;
+    ULONG ulInputMode, ulConversionMode;
+
+    ImGetInstance( hwnd, &himi );
+
+    ImQueryIMMode( himi, &ulInputMode, &ulConversionMode );
+
+    ImReleaseInstance( hwnd, himi );
+
+    return ( ulInputMode & IMI_IM_NLS_HANGEUL ) ? TRUE : FALSE;
+}
+
 VOID toggleIMEHanEng( HWND hwnd )
 {
     HWND hwndIm;
@@ -34,4 +48,3 @@ VOID callIMEHanja( HWND hwnd )
 
     ImReleaseInstance( hwnd, himi );
 }
-

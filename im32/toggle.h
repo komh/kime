@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+BOOL queryIMEHanEng( HWND hwnd );
 VOID toggleIMEHanEng( HWND hwnd );
 VOID callIMEHanja( HWND hwnd );
 
