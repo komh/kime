@@ -1,6 +1,7 @@
 .PHONY: release debug clean
 
 CP = copy
+RM = -del
 
 release :
 #	$(MAKE) -C hchlb release KIME=1
@@ -28,3 +29,6 @@ clean :
 	$(MAKE) -C hst clean
 	$(MAKE) -C im32 clean
 	$(MAKE) -C kime clean
+	$(RM) kime.exe
+	$(RM) Kimehook.dll
+	$(RM) except.dat
