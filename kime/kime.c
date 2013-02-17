@@ -95,7 +95,6 @@ INT main( int argc, char **argv )
 
         WinDestroyMsgQueue( hmq );
         WinTerminate( hab );
-
     }
 
     return 0;
@@ -348,7 +347,6 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
                      NULL, NULL );
 
     oldButtonWndProc = WinSubclassWindow( hwndBtn, newButtonWndProc );
-
 
 /*
     x += cx;
