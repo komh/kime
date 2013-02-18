@@ -626,8 +626,14 @@ VOID initKimeStatus( HWND hwnd )
     if( !kimeOpt.useOS2IME )
         WinSendMsg( hwndHIA, HIAM_SETHANMODE,
                     MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
-    else if( queryIMEHanEng( hwnd ) != hanStatus )
-        toggleIMEHanEng( hwnd );
+    else if( hanStatus != queryIMEHanEng( hwnd ))
+    {
+        hanStatus = !hanStatus;
+
+        WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
+                    MPFROMLONG( hanStatus ));
+        WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( hanStatus ), 0 );
+    }
 }
 
 BOOL isHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh )
