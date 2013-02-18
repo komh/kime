@@ -311,10 +311,9 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 
     WinSendMsg( kime->hwndHIA, HIAM_CONNECT, MPFROMLONG( hwnd ), MPFROMLONG( ID_HIA ));
 
-    kime->han = FALSE;
+    kime->han   = FALSE;
+    kime->fShow = FALSE;
     WinSetWindowPtr( hwnd, 0, kime );
-
-    kime->fShow = TRUE;
 
 #ifdef ADD_TO_SWITCH_ENTRY
     swc.hwnd = hwnd;
