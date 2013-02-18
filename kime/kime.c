@@ -37,6 +37,7 @@
     do {\
         WinPostMsg( hwnd, KIMEM_CHANGEHANHOOK, 0, 0 ); \
         WinPostMsg( hwnd, KIMEM_CHANGEHANHOOK, 0, 0 ); \
+        WinPostMsg( hwnd, KIMEM_RELOAD, 0, 0 ); \
     } while( 0 )
 
 typedef struct tagKIME {
