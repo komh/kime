@@ -622,13 +622,16 @@ VOID initKimeStatus( HWND hwnd )
     if( !findWnd( hwnd ))
         addWnd( hwnd );
 
-    hanStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS, MPFROMHWND( hwnd ), 0 );
     if( !kimeOpt.useOS2IME )
+    {
+        hanStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS,
+                                        MPFROMHWND( hwnd ), 0 );
         WinSendMsg( hwndHIA, HIAM_SETHANMODE,
                     MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
-    else if( hanStatus != queryIMEHanEng( hwnd ))
+    }
+    else
     {
-        hanStatus = !hanStatus;
+        hanStatus = queryIMEHanEng( hwnd );
 
         WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
                     MPFROMLONG( hanStatus ));
