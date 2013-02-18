@@ -44,6 +44,7 @@ typedef struct tagKIME {
     HWND    hwndHIA;
     HWND    hwndIB;
     HWND    hwndKHS;
+    BOOL    fShow;
 } KIME, *PKIME;
 
 static const char *hanStatusStr[] = { "Eng", "Han", };
@@ -313,6 +314,8 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     kime->han = FALSE;
     WinSetWindowPtr( hwnd, 0, kime );
 
+    kime->fShow = TRUE;
+
 #ifdef ADD_TO_SWITCH_ENTRY
     swc.hwnd = hwnd;
     swc.hwndIcon = NULLHANDLE;
@@ -541,6 +544,8 @@ MRESULT wmButton2Up( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 
 MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 {
+    PKIME kime = WinQueryWindowPtr( hwnd, 0 );
+
     switch( SHORT1FROMMP( mp2 ))
     {
         case CMDSRC_PUSHBUTTON :
@@ -569,11 +574,20 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
             switch( SHORT1FROMMP( mp1 ))
             {
                 case IDM_HIDE :
-                    if( WinQueryFocus( HWND_DESKTOP ) == hwnd )
-                        WinSetFocus( HWND_DESKTOP, WinQueryWindow( hwnd, QW_OWNER ));
+                {
+                    BOOL fShow = ( BOOL )SHORT2FROMMP( mp1 );
 
-                    WinShowWindow( hwnd, FALSE );
+                    if( !fShow )
+                    {
+                        if( WinQueryFocus( HWND_DESKTOP ) == hwnd )
+                            WinSetFocus( HWND_DESKTOP,
+                                         WinQueryWindow( hwnd, QW_OWNER ));
+                    }
+
+                    WinShowWindow( hwnd, fShow );
+                    kime->fShow = fShow;
                     break;
+                }
 
                 case IDM_RELOAD :
                 {
@@ -582,18 +596,13 @@ MRESULT wmCommand( HWND hwnd, MPARAM mp1, MPARAM mp2 )
                 }
 
                 case IDM_OPTIONS :
-                {
-                    PKIME kime = WinQueryWindowPtr( hwnd, 0 );
-
                     if( WinDlgBox( HWND_DESKTOP, hwnd, optDlgProc, NULLHANDLE, IDD_OPTDLG, &kimeOpt ) == DID_OK )
                     {
                         saveOpt( &kimeOpt );
 
                         WinSendMsg( kime->hwndHIA, HIAM_SETKBDTYPE, MPFROMLONG( kimeOpt.kbdLayout ), 0 );
                     }
-
                     break;
-                }
 
                 case IDM_EXIT :
                     WinPostMsg( hwnd, WM_QUIT, 0, 0 );
@@ -610,8 +619,11 @@ MRESULT kime_umChangeHan( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     PKIME kime = WinQueryWindowPtr( hwnd, 0 );
     HWND hwndHanEngBtn = WinWindowFromID( hwnd, IDB_HANENG );
 
-    WinInvalidateRect( hwnd, NULL, TRUE );
-    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
+    if( kime->fShow )
+    {
+        WinInvalidateRect( hwnd, NULL, TRUE );
+        WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
+    }
 
     kime->han = !kime->han;
     WinSetWindowText( hwndHanEngBtn, hanStatusStr[ kime->han ]);
@@ -624,8 +636,11 @@ MRESULT kime_umSetHan( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     PKIME kime = WinQueryWindowPtr( hwnd, 0 );
     HWND hwndHanEngBtn = WinWindowFromID( hwnd, IDB_HANENG );
 
-    WinInvalidateRect( hwnd, NULL, TRUE );
-    WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
+    if( kime->fShow )
+    {
+        WinInvalidateRect( hwnd, NULL, TRUE );
+        WinSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
+    }
 
     kime->han = LONGFROMMP( mp1 );
     WinSetWindowText( hwndHanEngBtn, hanStatusStr[ kime->han ]);

@@ -615,13 +615,15 @@ VOID initKimeStatus( HWND hwnd )
 {
     BOOL hanStatus;
 
-    if( checkExceptWindow( hwnd ))
+    if( checkExceptWindow( hwnd ) || !checkDBCSSupport( hwnd ))
     {
-        WinSendMsg( hwndKime, WM_COMMAND, MPFROM2SHORT( IDM_HIDE, 0 ), MPFROM2SHORT( CMDSRC_MENU, 0 ));
+        WinSendMsg( hwndKime, WM_COMMAND, MPFROM2SHORT( IDM_HIDE, 0 ),
+                    MPFROM2SHORT( CMDSRC_MENU, 0 ));
         return;
     }
 
-    WinShowWindow( hwndKime, TRUE );
+    WinSendMsg( hwndKime, WM_COMMAND, MPFROM2SHORT( IDM_HIDE, 0xFFFF ),
+                MPFROM2SHORT( CMDSRC_MENU, 0 ));
 
     if( !findWnd( hwnd ))
         addWnd( hwnd );
