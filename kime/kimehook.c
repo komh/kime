@@ -436,25 +436,19 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             return FALSE;
 
 #ifdef FOCUS_ON
-        dprintf(("inputFocusChanged %d, hwndCurrentInput %04X\n",
-                 inputFocusChanged, hwndCurrentInput ));
-
-        if( inputFocusChanged || ( hwndCurrentInput != pQmsg->hwnd ))
-        {
-            inputFocusChanged = FALSE;
-
-            hwndCurrentInput = pQmsg->hwnd;
-
-            initKimeStatus( hwndCurrentInput );
-
-            supportDBCS = checkDBCSSupport( hwndCurrentInput );
-            exception = checkExceptWindow( hwndCurrentInput );
-        }
-#else
+        dprintf(("inputFocusChanged %d, ", inputFocusChanged ));
+#endif
         dprintf(("hwndCurrentInput %04X\n", hwndCurrentInput ));
 
-        if( hwndCurrentInput != pQmsg->hwnd )
+        if( hwndCurrentInput != pQmsg->hwnd
+#ifdef FOCUS_ON
+            || inputFocusChanged
+#endif
+          )
         {
+#ifdef FOCUS_ON
+            inputFocusChanged = FALSE;
+#endif
             hwndCurrentInput = pQmsg->hwnd;
 
             initKimeStatus( hwndCurrentInput );
@@ -462,7 +456,6 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             supportDBCS = checkDBCSSupport( hwndCurrentInput );
             exception = checkExceptWindow( hwndCurrentInput );
         }
-#endif
 
         dprintf(("hwndCurrentInput %04X, supportDBCS %d, exception %d\n",
                   hwndCurrentInput, supportDBCS, exception ));
