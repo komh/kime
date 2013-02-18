@@ -27,6 +27,8 @@
 #define INCL_DOSMODULEMGR
 #define INCL_PM
 #include <os2.h>
+#include <os2im.h>
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -562,10 +564,6 @@ BOOL kimeAccelHook( PQMSG pQmsg )
 
     return FALSE;
 }
-
-#define WM_IMEREQUEST        0x00c6
-#define IMR_STATUS           2
-#define IMR_STATUS_INPUTMODE 0x00000004
 
 VOID kimeSendMsgHook( PSMHSTRUCT psmh )
 {
