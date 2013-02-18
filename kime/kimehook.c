@@ -621,6 +621,9 @@ VOID initKimeStatus( HWND hwnd )
 {
     BOOL hanStatus;
 
+    if( WinQueryWindow( hwnd, QW_OWNER ) == hwndKime )
+        return;
+
     if( checkExceptWindow( hwnd ) || !checkDBCSSupport( hwnd ))
     {
         WinSendMsg( hwndKime, WM_COMMAND, MPFROM2SHORT( IDM_HIDE, 0 ),
