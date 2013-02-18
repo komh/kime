@@ -276,6 +276,8 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         WinSendMsg( hwndKHS, KHSM_RELOADEXCEPTFILE, 0, 0 );
         hwndCurrentInput = WinQueryFocus( HWND_DESKTOP );
         initKimeStatus( hwndCurrentInput );
+
+        return 0;
     }
 
     if( msg == KIMEM_CALLHANJAINPUT )
