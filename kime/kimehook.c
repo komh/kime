@@ -105,6 +105,13 @@ static MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM
 
 #define queryRunningHCHLB() (( BOOL )WinSendMsg( hwndHIA, HIAM_QUERYRUNNINGHCHLB, 0, 0 ))
 
+#define setHanStatus( hwnd, han ) \
+    do { \
+        WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, \
+                    MPFROMHWND( hwnd ), MPFROMLONG( han )); \
+        WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( han ), 0 ); \
+    } while( 0 )
+
 //static BOOL isKimeProcess( HWND hwnd );
 static BOOL kimeAccelHook( PQMSG pQmsg );
 static VOID kimeSendMsgHook( PSMHSTRUCT psmh );
@@ -341,8 +348,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
                         break;
 
                     case HIAN_HANMODECHANGED:
-                        WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwndCurrentInput ), MPFROMLONG( LONGFROMMP( mp2 ) == HCH_HAN ));
-                        WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( LONGFROMMP( mp2 ) == HCH_HAN ), 0 );
+                        setHanStatus( hwndCurrentInput, LONGFROMMP( mp2 ) == HCH_HAN );
                         break;
 
                     case HIAN_KBDTYPECHANGED:
@@ -600,9 +606,7 @@ VOID kimeSendMsgHook( PSMHSTRUCT psmh )
         {
             BOOL fHanStatus = queryIMEHanEng( hwnd );
 
-            WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
-                        MPFROMLONG( fHanStatus ));
-            WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( fHanStatus ), 0 );
+            setHanStatus( hwnd, fHanStatus );
         }
     }
 }
@@ -633,9 +637,7 @@ VOID initKimeStatus( HWND hwnd )
     {
         hanStatus = queryIMEHanEng( hwnd );
 
-        WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
-                    MPFROMLONG( hanStatus ));
-        WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( hanStatus ), 0 );
+        setHanStatus( hwnd, hanStatus );
     }
 }
 
