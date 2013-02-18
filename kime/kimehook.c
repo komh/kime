@@ -487,13 +487,13 @@ BOOL kimeAccelHook( PQMSG pQmsg )
                 return TRUE;
             }
 
-#if 0
             if( callHanja )
             {
-                callIMEHanja( pQmsg->hwnd );
+                callIMEHanja( hwndCurrentInput );
+
                 return TRUE;
             }
-#endif
+
             return FALSE;
         }
 
