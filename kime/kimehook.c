@@ -284,7 +284,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
     {
         initKimeStatus( hwndCurrentInput );
 
-        WinSendMsg( hwndHIA, WM_CHAR, MPFROMSH2CH( KC_LONEKEY | KC_SCANCODE, 0, 0x5B ), 0 );
+        WinSendMsg( hwndHIA, WM_CHAR, MPFROMSH2CH( KC_LONEKEY | KC_SCANCODE, 0, 0x36 ), 0 );
 
         WinSetFocus( HWND_DESKTOP, hwndCurrentInput );
 
@@ -655,7 +655,7 @@ VOID initKimeStatus( HWND hwnd )
 BOOL isHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh )
 {
     if(( fsFlags & KC_LONEKEY ) && ( fsFlags & KC_SCANCODE ) &&
-       ( ucScancode == 0x5B ) && !( fsFlags & ( KC_ALT | KC_SHIFT )))         // if right CTRL
+       ( ucScancode == 0x36 ) && !( fsFlags & ( KC_ALT | KC_CTRL )))
         return TRUE;
 
     return FALSE;
