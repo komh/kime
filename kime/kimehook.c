@@ -619,6 +619,8 @@ VOID initKimeStatus( HWND hwnd )
         return;
     }
 
+    WinShowWindow( hwndKime, TRUE );
+
     if( !findWnd( hwnd ))
         addWnd( hwnd );
 
