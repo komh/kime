@@ -344,7 +344,7 @@ MRESULT khs_umStoreMsg( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 
     DosGetSharedMem( mp1, PAG_READ | PAG_WRITE );
 
-    fprintf( pkhscd->fp, "%s\n", ( PSZ )mp1 );
+    fprintf( pkhscd->fp, "%s", ( PSZ )mp1 );
     fflush( pkhscd->fp );
 
     return 0;
