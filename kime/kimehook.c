@@ -260,9 +260,17 @@ VOID sendCharToWnd( HANCHAR hch )
 }
 
 #define KIMEM_CALLHANJAINPUT    ( WM_USER + 1000 )
+#define KIMEM_INITKIMESTATUS    ( WM_USER + 1001 )
 
 MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
 {
+    if( msg == KIMEM_INITKIMESTATUS )
+    {
+        initKimeStatus( hwndCurrentInput );
+
+        return 0;
+    }
+
     if( msg == KIMEM_RELOAD )
     {
         WinSendMsg( hwndKHS, KHSM_RELOADEXCEPTFILE, 0, 0 );
@@ -584,7 +592,7 @@ VOID kimeSendMsgHook( PSMHSTRUCT psmh )
                 {
                     inputFocusChanged = TRUE;
                     hwndCurrentInput = psmh->hwnd;
-                    initKimeStatus( hwndCurrentInput );
+                    WinPostMsg( hwndKime, KIMEM_INITKIMESTATUS, 0, 0 );
                 }
 #endif
             }
