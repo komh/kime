@@ -221,7 +221,8 @@ VPC.EXE
   
 12. 하고 싶은 말이 있을 때...
 
-  e-mail         : komh@chollian.net
-  하이텔, 천리안 : komh
+  github 의 이슈 트래커를 이용해 주십시오.
 
-                                                  만든이 : 고명훈
+      https://github.com/komh/kime/issues
+
+고명훈
