@@ -57,7 +57,7 @@ static PFNWP oldButtonWndProc = NULL;
 
 static PVOID checkKime = NULL;
 
-static PSZ  hanjafontpath = NULL;
+static PSZ  hanjafontpath = "HANJA.FNT";
 
 static VOID run( HAB );
 static VOID destroy( VOID );
