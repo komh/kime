@@ -13,9 +13,6 @@
 #define KHSM_QUERYHANSTATUS         ( WM_USER + 4 )
 #define KHSM_CHANGEHANSTATUS        ( WM_USER + 5 )
 #define KHSM_SETHANSTATUS           ( WM_USER + 6 )
-#define KHSM_QUERYIMSTATUS          ( WM_USER + 7 )
-#define KHSM_CHANGEIMSTATUS         ( WM_USER + 8 )
-#define KHSM_SETIMSTATUS            ( WM_USER + 9 )
 #define KHSM_CHECKDBCSSUPPORT       ( WM_USER + 10 )
 
 #define KHSM_ISEXCEPTWINDOW         ( WM_USER + 11 )

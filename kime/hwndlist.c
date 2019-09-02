@@ -13,7 +13,6 @@ HWNDLIST *hwndlistCreate( VOID )
     list->next = list->prev = NULL;
     list->hwnd = 0;
     list->han = FALSE;
-    list->line = FALSE;
 
     return list;
 }

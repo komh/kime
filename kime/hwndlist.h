@@ -10,7 +10,6 @@ struct tagHWNDLIST
     HWNDLIST    *prev, *next;
     HWND        hwnd;
     BOOL        han;
-    BOOL        line;
 };
 
 #ifdef __cplusplus

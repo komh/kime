@@ -37,14 +37,13 @@
 
 typedef struct tagKIME {
     BOOL    han;
-    BOOL    line;
     HWND    hwndHIA;
     HWND    hwndIB;
     HWND    hwndKHS;
 } KIME, *PKIME;
 
 static const char *hanStatusStr[] = { "Eng", "Han", };
-static const char *imStatusStr[] = { "Char", "Line", };
+static const char *kimeLogoStr   = "KIME";
 
 static HWND hwndPopup = NULLHANDLE;
 
@@ -77,9 +76,6 @@ static MRESULT wmCommand( HWND, MPARAM, MPARAM );
 static MRESULT kime_umChangeHan( HWND, MPARAM, MPARAM );
 static MRESULT kime_umSetHan( HWND, MPARAM, MPARAM );
 static MRESULT kime_umQueryHan( HWND, MPARAM, MPARAM );
-static MRESULT kime_umChangeIm( HWND, MPARAM, MPARAM );
-static MRESULT kime_umSetIm( HWND, MPARAM, MPARAM );
-static MRESULT kime_umQueryIm( HWND, MPARAM, MPARAM );
 
 INT main( int argc, char **argv )
 {
@@ -282,9 +278,6 @@ MRESULT EXPENTRY windowProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         case KIMEM_CHANGEHAN     : return kime_umChangeHan( hwnd, mp1, mp2 );
         case KIMEM_SETHAN        : return kime_umSetHan( hwnd, mp1, mp2 );
         case KIMEM_QUERYHAN      : return kime_umQueryHan( hwnd, mp1, mp2 );
-        case KIMEM_CHANGEIM      : return kime_umChangeIm( hwnd, mp1, mp2 );
-        case KIMEM_SETIM         : return kime_umSetIm( hwnd, mp1, mp2 );
-        case KIMEM_QUERYIM       : return kime_umQueryIm( hwnd, mp1, mp2 );
     }
 
     return WinDefWindowProc( hwnd, msg, mp1, mp2 );
@@ -327,7 +320,6 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     WinSendMsg( kime->hwndHIA, HIAM_CONNECT, MPFROMLONG( hwnd ), MPFROMLONG( ID_HIA ));
 
     kime->han = FALSE;
-    kime->line = FALSE;
     WinSetWindowPtr( hwnd, 0, kime );
 
 #ifdef ADD_TO_SWITCH_ENTRY
@@ -351,7 +343,7 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
     oldButtonWndProc = WinSubclassWindow( hwndBtn, newButtonWndProc );
 
     x += cx + BORDER_SIZE * 2;
-    hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, imStatusStr[ kime->line ], WS_VISIBLE | BS_NOPOINTERFOCUS,
+    hwndBtn = WinCreateWindow( hwnd, WC_BUTTON, kimeLogoStr, WS_VISIBLE | BS_NOPOINTERFOCUS,
                      x, y, cx, cy, hwnd, HWND_TOP, IDB_IM,
                      NULL, NULL );
 
@@ -655,34 +647,4 @@ MRESULT kime_umQueryHan( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 
     return MRFROMLONG( kime->han );
 }
-
-MRESULT kime_umChangeIm( HWND hwnd, MPARAM mp1, MPARAM mp2 )
-{
-    PKIME kime = WinQueryWindowPtr( hwnd, 0 );
-    HWND hwndImBtn = WinWindowFromID( hwnd, IDB_IM );
-
-    kime->line = !kime->line;
-    WinSetWindowText( hwndImBtn, imStatusStr[ kime->line ]);
-
-    return 0;
-}
-
-MRESULT kime_umSetIm( HWND hwnd, MPARAM mp1, MPARAM mp2 )
-{
-    PKIME kime = WinQueryWindowPtr( hwnd, 0 );
-    HWND hwndImBtn = WinWindowFromID( hwnd, IDB_IM );
-
-    kime->line = LONGFROMMP( mp1 );
-    WinSetWindowText( hwndImBtn, imStatusStr[ kime->line ]);
-
-    return 0;
-}
-
-MRESULT kime_umQueryIm( HWND hwnd, MPARAM mp1, MPARAM mp2 )
-{
-    PKIME kime = WinQueryWindowPtr( hwnd, 0 );
-
-    return MRFROMLONG( kime->line );
-}
-
 

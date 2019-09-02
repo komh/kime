@@ -59,10 +59,7 @@
 
 #define DLL_NAME    "KIMEHOOK"
 
-#define WC_ZTELNET  "ClientWindowClass"
 #define WC_HCHLB    "HanCharListBox"
-
-#define SBCS_CHARS  "`1234567890-=\\~!@#$%^&*()_+|[]{};':\",./<>?"
 
 OPTDLGPARAM kimeOpt = { KL_KBD2, TRUE, TRUE, FALSE };
 
@@ -74,9 +71,6 @@ static HWND hwndKHS = NULLHANDLE;
 static HWND hwndCurrentInput = NULLHANDLE;
 
 static HMODULE hm = NULLHANDLE;
-static UCHAR uchPrevDbl = 0;
-static BOOL dblJaumPressed = FALSE;
-static BOOL prevHanInput = FALSE;
 
 static HANCHAR hchComposing = 0;
 static BOOL supportDBCS = FALSE;
@@ -109,17 +103,10 @@ static MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM
 
 #define queryRunningHCHLB() (( BOOL )WinSendMsg( hwndHIA, HIAM_QUERYRUNNINGHCHLB, 0, 0 ))
 
-static BOOL isDblJaum( UCHAR uch );
-static BOOL isZtelnet( HWND hwnd );
 //static BOOL isKimeProcess( HWND hwnd );
-static UCHAR *findKbdConv( UCHAR uch );
-static USHORT kbdKeyTranslate( PQMSG pQmsg );
-static BOOL isCapsLockOn( VOID );
-static BOOL ztelnetAccelHook( PQMSG pQmsg );
 static BOOL kimeAccelHook( PQMSG pQmsg );
-static VOID ztelnetSendMsgHook( PSMHSTRUCT psmh );
 static VOID kimeSendMsgHook( PSMHSTRUCT psmh );
-static VOID initKimeStatus( HWND hwnd, BOOL ztelnet );
+static VOID initKimeStatus( HWND hwnd );
 static BOOL isHanjaKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isSpecialCharKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isHCHLB( HWND hwnd );
@@ -181,18 +168,12 @@ BOOL EXPENTRY inputHook( HAB hab, PQMSG pQmsg, USHORT fsOptions )
 
 BOOL EXPENTRY accelHook( HAB hab, PQMSG pQmsg, USHORT fsOptions )
 {
-    if( isZtelnet( pQmsg->hwnd ))
-        return ztelnetAccelHook( pQmsg );
-
     return kimeAccelHook( pQmsg );
 }
 
 VOID EXPENTRY sendMsgHook( HAB hab, PSMHSTRUCT psmh, BOOL fInterTask )
 {
-    if( isZtelnet( psmh->hwnd ))
-        ztelnetSendMsgHook( psmh );
-    else
-        kimeSendMsgHook( psmh );
+    kimeSendMsgHook( psmh );
 }
 
 BOOL EXPENTRY destroyWindowHook( HAB hab, HWND hwnd, ULONG ulReserved )
@@ -245,21 +226,6 @@ VOID EXPENTRY uninstallHook( VOID )
     IM32Term();
 }
 
-BOOL isDblJaum( UCHAR uch )
-{
-    return (( uch == 'k' ) || ( uch == 'u' ) || ( uch == ';' ) ||
-            ( uch == 'n' ) || ( uch == 'l' ));
-}
-
-BOOL isZtelnet( HWND hwnd )
-{
-    UCHAR szClassName[ 256 ];
-
-    WinQueryClassName( hwnd, sizeof( szClassName ), szClassName );
-
-    return ( strcmp( szClassName, WC_ZTELNET ) == 0 );
-}
-
 /*
 BOOL isKimeProcess( HWND hwnd )
 {
@@ -271,53 +237,6 @@ BOOL isKimeProcess( HWND hwnd )
     return( pidKime == pidHwnd );
 }
 */
-
-UCHAR *findKbdConv( UCHAR uch )
-{
-    int i;
-
-    for( i = 0; ( kbdConvTable[ i ][ 0 ] != 0 ) &&
-                ( kbdConvTable[ i ][ 0 ] != uch ); i ++ );
-
-    return (( kbdConvTable[ i ][ 0 ] == 0 ) ? NULL : &kbdConvTable[ i ][ 0 ]);
-}
-
-
-USHORT kbdKeyTranslate( PQMSG pQmsg )
-{
-    USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
-    //UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
-    UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
-    USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
-    USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
-
-    if( ucScancode < 54 )
-    {
-        BOOL  shiftOn = ( fsFlags & KC_SHIFT ) ? TRUE : FALSE;
-        UCHAR uch = kbdKeyTransTable[ ucScancode ][ shiftOn ];
-
-        if( uch != 0 )
-        {
-            uch = ( shiftOn ^ isCapsLockOn()) ? toupper( uch ) : tolower( uch );
-
-            usCh = MAKEUSHORT( uch, 0 );
-
-            //pQmsg->mp1 = MPFROMSH2CH( fsFlags, ucRepeat, ucScancode );
-            pQmsg->mp2 = MPFROM2SHORT( usCh, usVk );
-        }
-    }
-
-    return usCh;
-}
-
-BOOL isCapsLockOn( VOID )
-{
-    BYTE keyState[ 256 ];
-
-    WinSetKeyboardStateTable( HWND_DESKTOP, keyState, FALSE );
-
-    return ( keyState[ VK_CAPSLOCK ] & 0x01 );
-}
 
 VOID sendCharToWnd( HANCHAR hch )
 {
@@ -344,7 +263,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
 
     if( msg == KIMEM_CALLHANJAINPUT )
     {
-        initKimeStatus( hwndCurrentInput, FALSE );
+        initKimeStatus( hwndCurrentInput );
 
         WinSendMsg( hwndHIA, WM_CHAR, MPFROMSH2CH( KC_LONEKEY | KC_SCANCODE, 0, 0x5B ), 0 );
 
@@ -445,111 +364,6 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
     return oldKimeWndProc( hwnd, msg, mp1, mp2 );
 }
 
-BOOL ztelnetAccelHook( PQMSG pQmsg )
-{
-    if( pQmsg->msg == WM_CHAR )
-    {
-        USHORT  fsFlags = SHORT1FROMMP( pQmsg->mp1 );
-        //UCHAR   ucRepeat = CHAR3FROMMP( pQmsg->mp1 );
-        //UCHAR   ucScancode = CHAR4FROMMP( pQmsg->mp1 );
-        USHORT  usCh = SHORT1FROMMP( pQmsg->mp2 );
-        USHORT  usVk = SHORT2FROMMP( pQmsg->mp2 );
-
-        if( fsFlags & KC_KEYUP )
-            return FALSE;
-
-        if(( fsFlags & ( KC_SHIFT | KC_CTRL )) && ( usVk == VK_SPACE ))
-        {
-            WinSendMsg( hwndKime, KIMEM_CHANGEHAN, 0, 0 );
-            WinSendMsg( hwndKHS, KHSM_CHANGEHANSTATUS, MPFROMHWND( pQmsg->hwnd ), 0 );
-        }
-        else if( !( fsFlags & KC_ALT ) && ( usVk == VK_F3 ))
-        {
-            WinSendMsg( hwndKime, KIMEM_CHANGEIM, 0, 0 );
-            WinSendMsg( hwndKHS, KHSM_CHANGEIMSTATUS, MPFROMHWND( pQmsg->hwnd ), 0 );
-        }
-        else if( LONGFROMMR( WinSendMsg( hwndKime, KIMEM_QUERYHAN, 0, 0 ))
-                 && ( !( fsFlags & ( KC_CTRL | KC_ALT ))))
-        {
-            UCHAR uch;
-            UCHAR *kbdConv;
-            BOOL  shiftOn;
-
-            usCh = kbdKeyTranslate( pQmsg );
-            uch = tolower( LOUCHAR( usCh ));
-            if( fsFlags & KC_SHIFT )
-                uch = toupper( uch );
-            else if( kimeOpt.patchChat && prevHanInput &&
-                     LONGFROMMR( WinSendMsg( hwndKime, KIMEM_QUERYIM, 0, 0 )) &&
-                     ( usVk == VK_SPACE ))
-                     WinSendMsg( pQmsg->hwnd, pQmsg->msg, pQmsg->mp1, pQmsg->mp2 );
-
-            shiftOn = FALSE;
-            if( isDblJaum( uch ))
-            {
-                if( dblJaumPressed )
-                {
-                    if( uchPrevDbl == uch )
-                    {
-                        if( kimeOpt.patch3bul )
-                            WinSendMsg( pQmsg->hwnd, WM_CHAR,
-                                        MPFROMSH2CH( fsFlags | KC_VIRTUALKEY, 0, 0 ),
-                                        MPFROM2SHORT( 0, VK_BACKSPACE ));
-
-                        uchPrevDbl = 0;
-                        dblJaumPressed = FALSE;
-                        shiftOn = TRUE;
-                    }
-                    else
-                        uchPrevDbl = uch;
-                }
-                else
-                {
-                    uchPrevDbl = uch;
-                    dblJaumPressed = TRUE;
-                }
-            }
-            else
-                dblJaumPressed = FALSE;
-
-            if(( kbdConv = findKbdConv( uch )) != NULL )
-            {
-                fsFlags &= ~KC_SHIFT;
-                if( kbdConv[ 3 ] || shiftOn )
-                    fsFlags |= KC_SHIFT;
-
-                usCh = MAKEUSHORT( kbdConv[ 1 ], 0 );
-                if( kbdConv[ 2 ])
-                {
-                    if( kimeOpt.patch3bul )
-                        WinSendMsg( pQmsg->hwnd, WM_CHAR,
-                                    MPFROMSH2CH( fsFlags, 0, 0 ),
-                                    MPFROM2SHORT( usCh, 0 ));
-
-                    usCh = MAKEUSHORT( kbdConv[ 2 ], 0 );
-                }
-
-                if( usCh )
-                {
-                    if( kimeOpt.patch3bul )
-                    {
-                        //pQmsg->mp1 = MPFROMSH2CH( fsFlags, ucRepeat, ucScancode );
-                        //pQmsg->mp2 = MPFROM2SHORT( usCh, usVk );
-
-                        pQmsg->mp1 = MPFROMSH2CH( fsFlags, 0, 0 );
-                        pQmsg->mp2 = MPFROM2SHORT( usCh, 0 );
-                    }
-                }
-            }
-
-            prevHanInput = ( strchr( SBCS_CHARS, SHORT1FROMMP( pQmsg->mp2 )) == NULL ) &&
-                           !( fsFlags & KC_VIRTUALKEY );
-        }
-    }
-
-    return FALSE;
-}
-
 BOOL kimeAccelHook( PQMSG pQmsg )
 {
     if( pQmsg->msg == WM_CHAR
@@ -630,7 +444,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
         {
             hwndCurrentInput = pQmsg->hwnd;
 
-            initKimeStatus( hwndCurrentInput, FALSE );
+            initKimeStatus( hwndCurrentInput );
 
             supportDBCS = checkDBCSSupport( hwndCurrentInput );
             exception = checkExceptWindow( hwndCurrentInput );
@@ -747,22 +561,6 @@ BOOL kimeAccelHook( PQMSG pQmsg )
     return FALSE;
 }
 
-VOID ztelnetSendMsgHook( PSMHSTRUCT psmh )
-{
-    if( psmh->msg == WM_SETFOCUS )
-    {
-        //HWND hwnd = HWNDFROMMP( psmh->mp1 );
-        BOOL focus = SHORT1FROMMP( psmh->mp2 );
-
-        if( focus )
-        {
-            initKimeStatus( psmh->hwnd, TRUE );
-            //WinSetWindowPos( hwndKime, HWND_TOP, 0, 0, 0, 0, SWP_SHOW | SWP_ZORDER );
-            //WinInvalidateRect( hwndKime, NULL, TRUE );
-        }
-    }
-}
-
 VOID kimeSendMsgHook( PSMHSTRUCT psmh )
 {
     if( psmh->msg == WM_SETFOCUS )
@@ -780,7 +578,7 @@ VOID kimeSendMsgHook( PSMHSTRUCT psmh )
                 {
                     inputFocusChanged = TRUE;
                     hwndCurrentInput = psmh->hwnd;
-                    initKimeStatus( hwndCurrentInput, FALSE );
+                    initKimeStatus( hwndCurrentInput );
                 }
 #endif
             }
@@ -788,10 +586,9 @@ VOID kimeSendMsgHook( PSMHSTRUCT psmh )
     }
 }
 
-VOID initKimeStatus( HWND hwnd, BOOL ztelnet )
+VOID initKimeStatus( HWND hwnd )
 {
     BOOL hanStatus;
-    BOOL imStatus;
 
     if( checkExceptWindow( hwnd ))
     {
@@ -804,11 +601,7 @@ VOID initKimeStatus( HWND hwnd, BOOL ztelnet )
 
     hanStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS, MPFROMHWND( hwnd ), 0 );
     WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( hanStatus ), 0 );
-    if( !ztelnet )
-        WinSendMsg( hwndHIA, HIAM_SETHANMODE, MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
-
-    imStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYIMSTATUS, MPFROMHWND( hwnd ), 0 );
-    WinSendMsg( hwndKime, KIMEM_SETIM, MPFROMLONG( imStatus ), 0 );
+    WinSendMsg( hwndHIA, HIAM_SETHANMODE, MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
 }
 
 BOOL isHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh )

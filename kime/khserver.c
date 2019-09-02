@@ -35,9 +35,6 @@ static MRESULT khs_umDelWnd( HWND, MPARAM, MPARAM );
 static MRESULT khs_umQueryHanStatus( HWND, MPARAM, MPARAM );
 static MRESULT khs_umChangeHanStatus( HWND, MPARAM, MPARAM );
 static MRESULT khs_umSetHanStatus( HWND, MPARAM, MPARAM );
-static MRESULT khs_umQueryImStatus( HWND, MPARAM, MPARAM );
-static MRESULT khs_umChangeImStatus( HWND, MPARAM, MPARAM );
-static MRESULT khs_umSetImStatus( HWND, MPARAM, MPARAM );
 static MRESULT khs_umCheckDBCSSupport( HWND, MPARAM, MPARAM );
 static MRESULT khs_umIsExceptWindow( HWND, MPARAM, MPARAM );
 static MRESULT khs_umReloadExceptFile( HWND, MPARAM, MPARAM );
@@ -74,9 +71,6 @@ MRESULT EXPENTRY khs_wndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
         case KHSM_QUERYHANSTATUS    : return khs_umQueryHanStatus( hwnd, mp1, mp2 );
         case KHSM_CHANGEHANSTATUS   : return khs_umChangeHanStatus( hwnd, mp1, mp2 );
         case KHSM_SETHANSTATUS      : return khs_umSetHanStatus( hwnd, mp1, mp2 );
-        case KHSM_QUERYIMSTATUS     : return khs_umQueryImStatus( hwnd, mp1, mp2 );
-        case KHSM_CHANGEIMSTATUS    : return khs_umChangeImStatus( hwnd, mp1, mp2 );
-        case KHSM_SETIMSTATUS       : return khs_umSetImStatus( hwnd, mp1, mp2 );
         case KHSM_CHECKDBCSSUPPORT  : return khs_umCheckDBCSSupport( hwnd, mp1, mp2 );
         case KHSM_ISEXCEPTWINDOW    : return khs_umIsExceptWindow( hwnd, mp1, mp2 );
         case KHSM_RELOADEXCEPTFILE  : return khs_umReloadExceptFile( hwnd, mp1, mp2 );
@@ -241,56 +235,6 @@ MRESULT khs_umSetHanStatus( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 
         list = hwndlistSearch( pkhscd->list, hwndInput );
         list->han = han;
-    }
-
-    return 0;
-}
-
-MRESULT khs_umQueryImStatus( HWND hwnd, MPARAM mp1, MPARAM mp2 )
-{
-    PKHSCD  pkhscd = WinQueryWindowPtr( hwnd, 0 );
-    HWND    hwndInput = HWNDFROMMP( mp1 );
-
-    if(( BOOL )WinSendMsg( hwnd, KHSM_FINDWND, MPFROMHWND( hwndInput ), 0 ))
-    {
-        PHWNDLIST list;
-
-        list = hwndlistSearch( pkhscd->list, hwndInput );
-
-        return MRFROMLONG( list->line );
-    }
-
-    return 0;
-}
-
-MRESULT khs_umChangeImStatus( HWND hwnd, MPARAM mp1, MPARAM mp2 )
-{
-    PKHSCD  pkhscd = WinQueryWindowPtr( hwnd, 0 );
-    HWND    hwndInput = HWNDFROMMP( mp1 );
-
-    if(( BOOL )WinSendMsg( hwnd, KHSM_FINDWND, MPFROMHWND( hwndInput ), 0 ))
-    {
-        PHWNDLIST list;
-
-        list = hwndlistSearch( pkhscd->list, hwndInput );
-        list->line = !list->line;
-    }
-
-    return 0;
-}
-
-MRESULT khs_umSetImStatus( HWND hwnd, MPARAM mp1, MPARAM mp2 )
-{
-    PKHSCD  pkhscd = WinQueryWindowPtr( hwnd, 0 );
-    HWND    hwndInput = HWNDFROMMP( mp1 );
-    BOOL    line = LONGFROMMP( mp2 );
-
-    if(( BOOL )WinSendMsg( hwnd, KHSM_FINDWND, MPFROMHWND( hwndInput ), 0 ))
-    {
-        PHWNDLIST list;
-
-        list = hwndlistSearch( pkhscd->list, hwndInput );
-        list->line = line;
     }
 
     return 0;
