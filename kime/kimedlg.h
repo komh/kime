@@ -5,12 +5,6 @@
 extern "C" {
 #endif
 
-#define IDG_PATCHGROUP  100
-#define IDB_3BUL        101
-#define IDB_CHATLINE    102
-#define IDHS_3BUL       111
-#define IDHS_CHATLINE   112
-
 #define IDG_KBDLAYOUT   200
 #define IDB_KBD2        201
 #define IDB_KBD390      202
@@ -31,8 +25,6 @@ extern "C" {
 
 typedef struct tagOPTDLGPARAM {
     ULONG   kbdLayout;
-    BOOL    patch3bul;
-    BOOL    patchChat;
     BOOL    useOS2IME;
 } OPTDLGPARAM, *POPTDLGPARAM;
 

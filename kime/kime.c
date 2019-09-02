@@ -20,8 +20,6 @@
 #define PRF_APP             "KIME"
 #define PRF_KEY_POSITION    "Position"
 #define PRF_KEY_KBDLAYOUT   "KbdLayout"
-#define PRF_KEY_PATCH3BUL   "Patch3Bul"
-#define PRF_KEY_PATCHCHAT   "PatchChat"
 #define PRF_KEY_USEOS2IME   "UseOS2IME"
 
 //#define ADD_TO_SWITCH_ENTRY
@@ -183,8 +181,6 @@ BOOL alreadyLoaded( VOID )
 VOID loadOpt( POPTDLGPARAM pOpt )
 {
     kimeOpt.kbdLayout = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_KBDLAYOUT, KL_KBD2 );
-    kimeOpt.patch3bul = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCH3BUL, TRUE );
-    kimeOpt.patchChat = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCHCHAT, TRUE );
     kimeOpt.useOS2IME = PrfQueryProfileInt( HINI_USERPROFILE, PRF_APP, PRF_KEY_USEOS2IME, FALSE );
 }
 
@@ -194,12 +190,6 @@ VOID saveOpt( POPTDLGPARAM pOpt )
 
     _ltoa( kimeOpt.kbdLayout, szOptStr, 10 );
     PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_KBDLAYOUT, szOptStr );
-
-    _ltoa( kimeOpt.patch3bul, szOptStr, 10 );
-    PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCH3BUL, szOptStr );
-
-    _ltoa( kimeOpt.patchChat, szOptStr, 10 );
-    PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_PATCHCHAT, szOptStr );
 
     _ltoa( kimeOpt.useOS2IME, szOptStr, 10 );
     PrfWriteProfileString( HINI_USERPROFILE, PRF_APP, PRF_KEY_USEOS2IME, szOptStr );
@@ -213,11 +203,7 @@ VOID processArg( INT argc, CHAR **argv )
 
     for( i = 1; i < argc; i ++ )
     {
-        if( strcmp( argv[ i ], "--no-3bul" ) == 0 )
-            kimeOpt.patch3bul = FALSE;
-        else if( strcmp( argv[ i ], "--no-chatline" ) == 0 )
-            kimeOpt.patchChat = FALSE;
-        else if( strcmp( argv[ i ], "--kbd390" ) == 0 )
+        if( strcmp( argv[ i ], "--kbd390" ) == 0 )
             kimeOpt.kbdLayout = KL_KBD390;
         else if( strcmp( argv[ i ], "--kbd3f" ) == 0 )
             kimeOpt.kbdLayout = KL_KBD3F;
