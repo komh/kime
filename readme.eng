@@ -143,9 +143,9 @@ programs with self-IME or for programs not needing Hangeul input.
 so you can edit it using any text editor. The format of it is to specify the 
 program name not needing Hangeul input in line unit.
 
-  Basically, EXCEPT.DAT has the following
+  Basically, KIMEXCPT.DAT has the following
 
----------- EXCEPT.DAT
+---------- KIMEXCPT.DAT
 HANEDIT.EXE
 HWPPM.EXE
 FOOL.EXE

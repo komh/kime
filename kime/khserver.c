@@ -11,7 +11,7 @@
 #include "except.h"
 #include "dosqss.h"
 
-#define EXCEPT_LIST_FILE    "EXCEPT.DAT"
+#define EXCEPT_LIST_FILE    "KIMEXCPT.DAT"
 
 #define DOSQSS_BUFSIZE  10240
 
