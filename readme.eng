@@ -82,7 +82,7 @@ specified by LIBPATH.
 
   Shift-Space : Toggle the status of Hangul/English of KIME
   Ctrl-Space  : Change the keyboard layout for Hangul of KIME
-  Right  CTRL : Call 'Hanja selection' window if inputting Hangul, 
+  Right Shift : Call 'Hanja selection' window if inputting Hangul, 
                 otherwise, Call 'Special char selection' window.
   
 5-2. Mouse
