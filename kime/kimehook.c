@@ -110,7 +110,6 @@ static VOID initKimeStatus( HWND hwnd );
 static BOOL isHanjaKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isSpecialCharKey( USHORT flags, UCHAR ucScancode, USHORT usVk, USHORT usCh );
 static BOOL isHCHLB( HWND hwnd );
-static VOID toggleOS2IMEHangEng( HWND hwnd );
 
 #ifdef DEBUG
 static VOID storeMsg( char *format, ... );
@@ -202,7 +201,7 @@ BOOL EXPENTRY installHook( HAB habAB, PHOOKDATA phd )
     hwndIB = phd->hwndIB;
     hwndKHS = phd->hwndKHS;
 
-    hwndCurrentInput = NULLHANDLE;
+    hwndCurrentInput = WinQueryFocus( HWND_DESKTOP );
 
     oldKimeWndProc = WinSubclassWindow( hwndKime, newKimeWndProc );
 
@@ -258,7 +257,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
     if( msg == KIMEM_RELOAD )
     {
         WinSendMsg( hwndKHS, KHSM_RELOADEXCEPTFILE, 0, 0 );
-        hwndCurrentInput = NULLHANDLE;
+        hwndCurrentInput = WinQueryFocus( HWND_DESKTOP );
     }
 
     if( msg == KIMEM_CALLHANJAINPUT )
@@ -278,7 +277,7 @@ MRESULT EXPENTRY newKimeWndProc( HWND hwnd, ULONG msg, MPARAM mp1, MPARAM mp2 )
             return 0;
 
         if( kimeOpt.useOS2IME )
-            toggleOS2IMEHanEng( hwndCurrentInput );
+            toggleIMEHanEng( hwndCurrentInput );
         else if( checkDBCSSupport( hwndCurrentInput ))
             WinSendMsg( hwndHIA, HIAM_CHANGEHANMODE, 0, 0 );
 
@@ -469,7 +468,7 @@ BOOL kimeAccelHook( PQMSG pQmsg )
             if((( fsFlags & ( KC_ALT | KC_CTRL | KC_SHIFT )) == KC_SHIFT ) &&
                (( fsFlags & KC_VIRTUALKEY ) && ( usVk == VK_SPACE )))
             {
-                toggleOS2IMEHanEng( hwndCurrentInput );
+                toggleIMEHanEng( hwndCurrentInput );
 
                 return TRUE;
             }
@@ -564,6 +563,10 @@ BOOL kimeAccelHook( PQMSG pQmsg )
     return FALSE;
 }
 
+#define WM_IMEREQUEST        0x00c6
+#define IMR_STATUS           2
+#define IMR_STATUS_INPUTMODE 0x00000004
+
 VOID kimeSendMsgHook( PSMHSTRUCT psmh )
 {
     if( psmh->msg == WM_SETFOCUS )
@@ -587,6 +590,23 @@ VOID kimeSendMsgHook( PSMHSTRUCT psmh )
             }
         }
     }
+    else if( kimeOpt.useOS2IME && psmh->msg == WM_IMEREQUEST )
+    {
+        HWND  hwnd     = psmh->hwnd;
+        ULONG ulReq    = LONGFROMMP( psmh->mp1 );
+        ULONG ulStatus = LONGFROMMP( psmh->mp2 );
+
+        if( hwnd     == hwndCurrentInput &&
+            ulReq    == IMR_STATUS &&
+            ulStatus == IMR_STATUS_INPUTMODE )
+        {
+            BOOL fHanStatus = queryIMEHanEng( hwnd );
+
+            WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
+                        MPFROMLONG( fHanStatus ));
+            WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( fHanStatus ), 0 );
+        }
+    }
 }
 
 VOID initKimeStatus( HWND hwnd )
@@ -603,8 +623,11 @@ VOID initKimeStatus( HWND hwnd )
         addWnd( hwnd );
 
     hanStatus = ( BOOL )WinSendMsg( hwndKHS, KHSM_QUERYHANSTATUS, MPFROMHWND( hwnd ), 0 );
-    WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( hanStatus ), 0 );
-    WinSendMsg( hwndHIA, HIAM_SETHANMODE, MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
+    if( !kimeOpt.useOS2IME )
+        WinSendMsg( hwndHIA, HIAM_SETHANMODE,
+                    MPFROMLONG( hanStatus ? HCH_HAN : HCH_ENG ), 0 );
+    else if( queryIMEHanEng( hwnd ) != hanStatus )
+        toggleIMEHanEng( hwnd );
 }
 
 BOOL isHanjaKey( USHORT fsFlags, UCHAR ucScancode, USHORT usVk, USHORT usCh )
@@ -634,18 +657,6 @@ BOOL isHCHLB( HWND hwnd )
 
     WinQueryClassName( WinQueryWindow( hwnd, QW_OWNER ), sizeof( szBuffer ), szBuffer );
     return ( BOOL )( strcmp( szBuffer, WC_HCHLB ) == 0 );
-}
-
-VOID toggleOS2IMEHanEng( HWND hwnd )
-{
-    BOOL fHanStatus;
-
-    toggleIMEHanEng( hwnd );
-
-    fHanStatus = queryIMEHanEng( hwnd );
-    WinSendMsg( hwndKHS, KHSM_SETHANSTATUS, MPFROMHWND( hwnd ),
-                MPFROMLONG( fHanStatus ));
-    WinSendMsg( hwndKime, KIMEM_SETHAN, MPFROMLONG( fHanStatus ), 0 );
 }
 
 #ifdef DEBUG

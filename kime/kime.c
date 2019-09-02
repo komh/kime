@@ -33,6 +33,12 @@
                          ( charWidth * 4 ) + ( EXTRA_WIDTH * 2 ))
 #define WIN_HEIGHT      (( BORDER_SIZE * 2 ) + charHeight * 2 + ( EXTRA_HEIGHT * 2 ))
 
+#define SYNC_INPUT_STATUS() \
+    do {\
+        WinPostMsg( hwnd, KIMEM_CHANGEHANHOOK, 0, 0 ); \
+        WinPostMsg( hwnd, KIMEM_CHANGEHANHOOK, 0, 0 ); \
+    } while( 0 )
+
 typedef struct tagKIME {
     BOOL    han;
     HWND    hwndHIA;
@@ -342,6 +348,8 @@ MRESULT wmCreate( HWND hwnd, MPARAM mp1, MPARAM mp2 )
 */
 
     hwndPopup = WinLoadMenu( hwnd, NULLHANDLE, ID_POPUP );
+
+    SYNC_INPUT_STATUS();
 
     return 0;
 }
