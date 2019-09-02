@@ -1,8 +1,8 @@
-			K Input Method Editor v0.1.4
+                       K Input Method Editor v0.1.4
 
 0. Introduction
 
-  This program is made to support inputting Hangeul(Korean chars) on 
+  This program is made to support inputting Hangul(Korean chars) on 
 non-Korean OS/2.
 
 1. Development Environments
@@ -13,8 +13,8 @@ non-Korean OS/2.
   
 2. Requirements
 
-  It should be possible at least to print Hangeul in order to enable to input 
-Hangeul. Especially, codepage 949(codepage for Korean) should be supported. 
+  It should be possible at least to print Hangul in order to enable to input 
+Hangul. Especially, codepage 949(codepage for Korean) should be supported. 
 Fortunately, ULS(Universal Language Supports) feature is supported since Warp 
 4 FixPak #5.
   You should add CP949 in CONFIG.SYS as the following.
@@ -24,17 +24,16 @@ from
 to
 	CODEPAGE=850,949
 
-  Of course, you can set the primary codepage as 949, but if you so, you 
-cannot use help manger on a few programs. So specifying secondary code page 
-as 949 is recommended.
+  Of course, you can set the primary codepage as 949, but if you do so, you 
+cannot use help manger on a few programs. So specifying 949 as secondary code 
+page is recommended.
 
-  And Hangeul font is needed to print Hangeul. You can use 'Times New Roman 
-WT K' font distributed for Java 2 v1.3.1 by IBM. For reference, you can you 
+  And Hangul font is needed to print Hangul. You can use 'Times New Roman 
+WT K' font distributed for Java 2 v1.3.1 by IBM. For reference, you can use
 any other unicode fonts such as Gulim shipped by M$ Windows for Korean, if 
-you install FreeType/2 v1.0-k5-sbit-fakebold version(improved FreeType/2 
-version for DBCS, especially for Korean).
+you install FreeType/2 v1.2 or later.
 
-  And you should run any program which you want to input Hangeul in CP949. 
+  And you should run any program which you want to input Hangul in CP949. 
 The following batch file is helpful.
 
 ---------- 949run.cmd
@@ -46,19 +45,19 @@ chcp 850
 
 2-1. Test Environments
 
-  This program have been tested on Warp Server for e-Business for English 
-with FixPak #3 and Warp 4 for Korean with FixPak #15. You can use this 
-program without any conflicts with original IME on Korean Warp.
+  This program have been tested on eComStation v2.1 for English and Warp 4 for 
+Korean with FixPak #15. You can use this program without any conflicts with 
+system IME on Korean Warp.
 
 3. Features
 
-  - Input Hangeul regardless of keyboard type
+  - Input Hangul regardless of keyboard type
   
   - Support 2 bulsik, 3 bulsik 390, 3 bulsik final
   
-  - Manage Hangeul input status according to window
+  - Manage Hangul input status according to window
   
-  - Specify programs which Hangeul input is not needed
+  - Specify programs which Hangul input is not needed
   
   - Supports 'Over The Spot'
   
@@ -81,9 +80,9 @@ specified by LIBPATH.
   
 5-1. Hot keys
 
-  Shift-Space : Toggle the status of Hangeul/English of KIME
-  Ctrl-Space  : Change the keyboard layout for Hangeul of KIME
-  Right  CTRL : Call 'Hanja selection' window if inputting Hangeul, 
+  Shift-Space : Toggle the status of Hangul/English of KIME
+  Ctrl-Space  : Change the keyboard layout for Hangul of KIME
+  Right  CTRL : Call 'Hanja selection' window if inputting Hangul, 
                 otherwise, Call 'Special char selection' window.
   
 5-2. Mouse
@@ -101,8 +100,9 @@ specified by LIBPATH.
   "--kbd390"      : Start KIME with 3 bulsik 390 layout
   "--kbd3f"       : Start KIME with 3 bulsik final layout
   "--hanjafont"   : Specify bitmap Hanja font to support 'Hanja selection'
-                    This package include HANJA.FNT.
-                         
+                    This package includes HANJA.FNT.
+  "--useos2ime"   : Use a OS/2 system IME
+
 5-5. KIMEOPT environment variable
   Without command line options, you can use 'KIMEOPT' environment variable. 
 Launching KIME after setting KIMEOPT=--kbd390 is the same as launching 'KIME 
@@ -110,38 +110,37 @@ Launching KIME after setting KIMEOPT=--kbd390 is the same as launching 'KIME
         
 6. Limitations and Known Bugs
 
-  - if you press arrow key or enter key when inputting Hangeul on Netscape, 
-Hangeul is inputted after key processed
+  - if you press arrow key or enter key when inputting Hangul on Netscape, 
+Hangul is inputted after key processed
     
-  - Input Hangeul on non-949 CP because KIME cannot query a codepage of 
-window. Of course, Hangeul is not inputted.
+  - Input Hangul on non-949 CP because KIME cannot query a codepage of 
+window. Of course, Hangul is not inputted.
     
   - Status window appears when pressing virtual keys( Alt, Ctrl, Shift, Fxx ) 
   
   - Process 'Exception List File' on current working directory
 
-  - Cannot change the status of Hangeul/English using status window
-  
   - Supports only PM except VIO.
+    ( For VIO, use KShell with KIME )
 
   - Cannot use unicode fonts for 'Font Association'
-    But, unicode fonts are supported by FreeType/2-k5-sbit-fakebold version.
+    But, unicode fonts are supported by FreeType/2 v1.2 or later.
   
-  - if clicking when inputting Hangeul on E, Hangeul is located at mouse 
-    cursor position, and reversed box as selection appears at side of Hangeul.
+  - if clicking when inputting Hangul on E, Hangul is located at mouse 
+    cursor position, and reversed box as selection appears at side of Hangul.
   
 7. To do
 
-  - Change status of input using status window
+  - Planning...
   
 8. Exception List File
 
   'Exception List File' is intended to avoid conflict with toggle key of 
-programs with self-IME or for programs not needing Hangeul input.
+programs with self-IME or for programs not needing Hangul input.
 
   'Exception List File' is a plain text on a directory where KIME is there, 
 so you can edit it using any text editor. The format of it is to specify the 
-program name not needing Hangeul input in line unit.
+program name not needing Hangul input in line unit.
 
   Basically, KIMEXCPT.DAT has the following
 
@@ -159,7 +158,7 @@ VPC.EXE
     Fixed. Input status is sometimes not changed on Mozilla
     Fixed. Cannot input special char/Hanja becuase of focus change
     Fixed. Hangule is located at mouse cursor position if clicking while 
-           inputting Hangeul
+           inputting Hangul
     Supports for Odin is improved.
     
   - v0.1.3 ( 2003/03/04 )
@@ -181,18 +180,18 @@ VPC.EXE
   - v0.1.0 ( 2001/11/27 )
     Added. Supports special char/Hanja input
     Added. Supports 'Font Associatoin Setting'
-    Fixed. Function keys(Fxx) is not processed while Hangeul mode
+    Fixed. Function keys(Fxx) is not processed while Hangul mode
     
   - v0.0.0 ( 2001/11/08 )
     Initial version
           
 10. Compile
   
-  You need EMX 0.9d fix #4 + gcc 2.8.1 and GNU Make 3.76.1 or above.
+  You need EMX 0.9d fix #4 + gcc 2.8.1 and GNU Make 3.81-k2 or above.
 
 11. Thanks to ...
   Moon, Yoo-Seong(kwisatz@hitel.net)
-    Author of HIA, which is a moudle for input of Hangeul used by this program
+    Author of HIA, which is a moudle for input of Hangul used by this program
 
   Choi, Min-Soon(josuwa77)
     Provide Warp Server for e-Business with me.
@@ -204,4 +203,3 @@ VPC.EXE
   ICQ    : 124861818
   MSN    : komh@chollian.net
   IRC    : lvzuufx, #os2 at HANIRC(irc.hanirc.org)
-  
